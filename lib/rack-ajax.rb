@@ -10,13 +10,13 @@ module Rack
     end
 
     def call(env)
-      return @app.call(env) unless AjaxSite.enabled?
+      return @app.call(env) unless ::Ajax.enabled?
 
       @parser = Parser.new(env)
-      rack_response = @parser.instance_eval(@decision_tree)
+      rack_response = @parser.instance_eval(&@decision_tree)
 
       # Don't invoke the app if applying the rule returns a rack response
-      return rack_response unless rack_response === true
+      return rack_response unless rack_response.nil?
 
       @app.call(env)
     ensure

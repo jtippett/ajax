@@ -4,13 +4,12 @@ module Rack
       def initialize(env)
         @env = env
         @request = ActionController::Request.new(env)
-        @params = request.params
       end
 
       protected
 
       def hashed_url?
-        @hashed_url ||= @request.path
+        @hashed_url ||= Ajax.is_hashed_url?(@env['REQUEST_URI'])
       end
 
       def ajax_request?
@@ -38,18 +37,19 @@ module Rack
       end
 
       def rewrite(interpreted_to)
-        env['REQUEST_URI'] = interpreted_to
+        @env['REQUEST_URI'] = interpreted_to
         if q_index = interpreted_to.index('?')
-          env['PATH_INFO'] = interpreted_to[0..q_index-1]
-          env['QUERY_STRING'] = interpreted_to[q_index+1..interpreted_to.size-1]
+          @env['PATH_INFO'] = interpreted_to[0..q_index-1]
+          @env['QUERY_STRING'] = interpreted_to[q_index+1..interpreted_to.size-1]
         else
-          env['PATH_INFO'] = interpreted_to
-          env['QUERY_STRING'] = ''
+          @env['PATH_INFO'] = interpreted_to
+          @env['QUERY_STRING'] = ''
         end
       end
 
       def rewrite_to_traditional_url
-        'AJAX'
+        url = @request.
+        rewrite()
       end
 
       def redirect_to_fragment_of_url
