@@ -1,3 +1,7 @@
+# The <tt>rewrite</tt> and <tt>redirect</tt> methods are terminal methods meaning
+# that they return a Rack response or modify the Rack request.
+#
+# Return <tt>nil</tt> to allow the request to fall-through to the Application.
 module Rack
   class Ajax
     class Parser
@@ -9,7 +13,7 @@ module Rack
       protected
 
       def hashed_url?
-        @hashed_url ||= Ajax.is_hashed_url?(@env['REQUEST_URI'])
+        @hashed_url ||= ::Ajax.is_hashed_url?(@env['REQUEST_URI'])
       end
 
       def ajax_request?
@@ -48,12 +52,18 @@ module Rack
       end
 
       def rewrite_to_traditional_url
-        url = @request.
-        rewrite()
+        #url = @request.
+        #rewrite()
+        'AJAX'
       end
 
-      def redirect_to_fragment_of_url
-        'non-AJAX'
+      # Redirect to a hashed URL consisting of the fragment portion of the current URL.
+      # This is an edge case.  What can theoretically happen is a user visits a
+      # bookmarked URL, then browses via AJAX and ends up with a URL like
+      # '/Beyonce#/Akon'.  Redirect them to '/#/Akon'.
+      def redirect_to_url_fragment
+        require 'ruby-debug'; debugger
+        r302(::Ajax.hashed_url_from_fragment(@env['REQUEST_URI']))
       end
 
       def redirect_to_hashed_url
