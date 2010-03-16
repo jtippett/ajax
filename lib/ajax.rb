@@ -4,7 +4,7 @@ module Ajax
   extend Helpers
 
   # Return a boolean indicating whether the plugin is currently enabled
-  def self.enabled?
+  def self.is_enabled?
     @enabled ||= true
   end
 
@@ -14,7 +14,7 @@ module Ajax
   end
 
   # Return a boolean indicating whether the plugin is being mock tested
-  def self.mocked?
+  def self.is_mocked?
     @mocked ||= false
   end
 

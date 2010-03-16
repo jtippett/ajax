@@ -51,18 +51,15 @@ module Rack
         end
       end
 
-      def rewrite_to_traditional_url
-        #url = @request.
-        #rewrite()
-        'AJAX'
+      def rewrite_to_traditional_url_from_fragment
+        rewrite(::Ajax.traditional_url_from_fragment(@env['REQUEST_URI']))
       end
 
       # Redirect to a hashed URL consisting of the fragment portion of the current URL.
       # This is an edge case.  What can theoretically happen is a user visits a
       # bookmarked URL, then browses via AJAX and ends up with a URL like
       # '/Beyonce#/Akon'.  Redirect them to '/#/Akon'.
-      def redirect_to_url_fragment
-        require 'ruby-debug'; debugger
+      def redirect_to_hashed_url_from_fragment
         r302(::Ajax.hashed_url_from_fragment(@env['REQUEST_URI']))
       end
 
