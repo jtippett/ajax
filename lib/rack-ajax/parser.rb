@@ -36,6 +36,20 @@ module Rack
         @user_is_robot ||= (Utilities::RobotFinder.robot_for(@request.user_agent) && true)
       end
 
+      def rewrite_to_traditional_url_from_fragment
+        rewrite(::Ajax.traditional_url_from_fragment(@env['REQUEST_URI']))
+      end
+
+      # Redirect to a hashed URL consisting of the fragment portion of the current URL.
+      # This is an edge case.  What can theoretically happen is a user visits a
+      # bookmarked URL, then browses via AJAX and ends up with a URL like
+      # '/Beyonce#/Akon'.  Redirect them to '/#/Akon'.
+      def redirect_to_hashed_url_from_fragment
+        r302(::Ajax.hashed_url_from_fragment(@env['REQUEST_URI']))
+      end
+
+      private
+
       def r302(url)
         [302, {'Location' => url, 'Content-Type' => 'text/html'}, ['Redirecting...']]
       end
@@ -50,22 +64,6 @@ module Rack
           @env['QUERY_STRING'] = ''
         end
         nil # fallthrough to app
-      end
-
-      def rewrite_to_traditional_url_from_fragment
-        rewrite(::Ajax.traditional_url_from_fragment(@env['REQUEST_URI']))
-      end
-
-      # Redirect to a hashed URL consisting of the fragment portion of the current URL.
-      # This is an edge case.  What can theoretically happen is a user visits a
-      # bookmarked URL, then browses via AJAX and ends up with a URL like
-      # '/Beyonce#/Akon'.  Redirect them to '/#/Akon'.
-      def redirect_to_hashed_url_from_fragment
-        r302(::Ajax.hashed_url_from_fragment(@env['REQUEST_URI']))
-      end
-
-      def redirect_to_hashed_url
-        'AJAX'
       end
     end
   end

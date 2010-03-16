@@ -19,6 +19,6 @@ module ActiveSupport
 
     before(:all) do
       ::Ajax.enabled = false
-    end
+    end if method_defined?(:before)
   end
 end

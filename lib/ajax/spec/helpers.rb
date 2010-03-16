@@ -1,3 +1,5 @@
+require 'uri'
+
 module Ajax
   module Spec
     module Helpers
@@ -18,13 +20,13 @@ module Ajax
 
       def should_redirect_to(location, code)
         ret = @rack.call(@env)
-        assert_equal code, ret[0]
-        assert_equal location, ret[1]['Location'], 'Location is incorrect'
+        code.should == ret[0]
+        location.should == ret[1]['Location']
       end
 
       def should_rewrite_to(url)
         ret = @rack.call(@env)
-        assert_equal url, ret[2]['REQUEST_URI'], 'Rewritten URL is incorrect'
+        url.should == ret[2]['REQUEST_URI']
       end
     end
   end

@@ -31,7 +31,7 @@ module Rack
     ensure
       # Release the connections back to the pool.
       # @see http://blog.codefront.net/2009/06/15/activerecord-rails-metal-too-many-connections/
-      ActiveRecord::Base.clear_active_connections!
+      ::ActiveRecord::Base.clear_active_connections! if defined?(::ActiveRecord::Base)
     end
   end
 end
