@@ -49,6 +49,7 @@ module Rack
           @env['PATH_INFO'] = interpreted_to
           @env['QUERY_STRING'] = ''
         end
+        nil # fallthrough to app
       end
 
       def rewrite_to_traditional_url_from_fragment

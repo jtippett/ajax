@@ -21,7 +21,7 @@ module Rack
       # In order to test rewrites, return a 200 response with
       # the environment.
       if ::Ajax.is_mocked?
-        rack_response.nil? ? [200, {}, env] : rackresponse
+        rack_response.nil? ? [200, {}, env] : rack_response
       elsif !rack_response.nil?
         rack_response
       else
