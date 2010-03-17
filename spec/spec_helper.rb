@@ -3,6 +3,9 @@ require 'spec/autorun'
 require 'rubygems'
 require 'ajax/spec/extension'
 
+# Just drop in 'debugger' to debug test code
+require 'ruby-debug'
+
 # Rails dependencies
 require 'action_controller'
 require 'active_support/core_ext'

@@ -5,6 +5,11 @@
 module Rack
   class Ajax
     class Parser
+      #
+      # Custom HTTP headers
+      #
+      RACK_AJAX_REWRITE = 'RACK_AJAX_REWRITE'
+
       def initialize(env)
         @env = env
         @request = ActionController::Request.new(env)
@@ -47,7 +52,7 @@ module Rack
       private
 
       def r302(url)
-        [302, {'Location' => url, 'Content-Type' => 'text/html'}, ['Redirecting...']]
+        rack_response('Redirecting...', 302, 'Location' => url)
       end
 
       def rewrite(interpreted_to)
@@ -59,8 +64,25 @@ module Rack
           @env['PATH_INFO'] = interpreted_to
           @env['QUERY_STRING'] = ''
         end
+
+        # Set a custom header indicating that the URL has been rewritten
+        @env[self.class::RACK_AJAX_REWRITE] = interpreted_to
+
         nil # fallthrough to app
       end
+
+      # You can use this method during integration testing Rack::Ajax
+      # in your Rails app.  If you don't return a proper Rack response
+      # during integration testing, ActiveSupport can't parse the
+      # response.
+      #
+      # If you're testing Rack without Rails you can return base types
+      # so you don't need this method.
+      def self.rack_response(msg, code=200, headers={})
+        headers.reverse_merge!({'Content-Type' => 'text/html'})
+        [code, headers, [msg.to_s]]
+      end
+      def rack_response(*args); self.class.rack_response(*args); end
     end
   end
 end

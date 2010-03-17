@@ -23,12 +23,16 @@ module Rack
       rack_response = @parser.instance_eval(&@decision_tree)
 
       # If we are testing our Rack::Ajax middleware, return
-      # a Rack response now.
+      # a Rack response now rather than falling through
+      # to the application.
       #
-      # In order to test rewrites, return a 200 response with
-      # the environment.
+      # To test rewrites, return a 200 response with
+      # the modified request environment encoded as Yaml.
+      #
+      # The Ajax::Spec::Helpers module includes a helper
+      # method to test the result of a rewrite.
       if ::Ajax.is_mocked?
-        rack_response.nil? ? [200, {"Content-Type" => "text/html"}, env] : rack_response
+        rack_response.nil? ? Rack::Ajax::Parser.rack_response(env.to_yaml) : rack_response
       elsif !rack_response.nil?
         rack_response
       else
