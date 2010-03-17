@@ -13,6 +13,17 @@ context 'Ajax::Helpers' do
     end
   end
 
+  describe "(boolean) url_is_root?" do
+    it "should detect root urls" do
+      Ajax.url_is_root?('/#/Beyonce?query2').should be(true)
+      Ajax.url_is_root?('/').should be(true)
+    end
+
+    it "should detect non-root urls" do
+      Ajax.url_is_root?('/Beyonce').should be(false)
+    end
+  end
+
   describe "(boolean) is_hashed_url?" do
     it "should return false for fragments that don't start with /" do
       Ajax.is_hashed_url?('/Beyonce#Akon').should be(false)

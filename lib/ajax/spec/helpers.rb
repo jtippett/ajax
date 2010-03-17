@@ -8,33 +8,38 @@ module Ajax
         @app = Class.new { def call(env); true; end }.new
       end
 
-      def env(uri)
-        uri = URI.parse(uri)
-        @env = {'REQUEST_URI' => uri.to_s, 'PATH_INFO' => uri.path, 'QUERY_STRING' => uri.query}
-      end
-
-      def call_rack(url, &block)
-        env(url)
+      def call_rack(url, request_method='GET', &block)
+        env(url, request_method)
         @rack = Rack::Ajax.new(@app, &block)
+        @response = @rack.call(@env)
       end
 
       def should_redirect_to(location, code=302)
-        ret = @rack.call(@env)
-        ret[0].should == code
-        ret[1]['Location'].should == location
+        @response[0].should == code
+        @response[1]['Location'].should == location
       end
 
       def should_rewrite_to(url)
-        ret = @rack.call(@env)
-        ret[2]['REQUEST_URI'].should == url
+        @response[2].class.should be(Hash)
+        @response[2]['REQUEST_URI'].should == url
       end
 
       def should_not_modify_request
-        ret = @rack.call(@env)
+        @response[2].class.should be(Hash)
         @env.each do |k,v|
-          ret[2][k].should == v
+          @response[2][k].should == v
         end
-        ret[0].should == 200
+        @response[0].should == 200
+      end
+
+      def env(uri, request_method)
+        uri = URI.parse(uri)
+        @env = {
+          'REQUEST_URI' => uri.to_s,
+          'PATH_INFO' => uri.path,
+          'QUERY_STRING' => uri.query,
+          'REQUEST_METHOD' => request_method
+        }
       end
     end
   end

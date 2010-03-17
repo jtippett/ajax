@@ -29,11 +29,7 @@ module Rack
       end
 
       def url_is_root?
-        @url_is_root ||= @request.path =~ %r[\/?]
-      end
-
-      def user_is_robot?
-        @user_is_robot ||= (Utilities::RobotFinder.robot_for(@request.user_agent) && true)
+        @url_is_root ||= ::Ajax.url_is_root?(@env['PATH_INFO'])
       end
 
       def rewrite_to_traditional_url_from_fragment

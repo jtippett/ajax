@@ -1,6 +1,12 @@
 module Ajax
   module Helpers
 
+    # Return a boolean indicating whether the given URL points to the
+    # root path.
+    def url_is_root?(url)
+      !!(URI.parse(url).path =~ %r[^\/?$])
+    end
+
     # The URL is hashed if the fragment part starts with a /
     #
     # For example, http://lol.com#/Rihanna

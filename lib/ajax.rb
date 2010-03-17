@@ -10,7 +10,7 @@ module Ajax
 
   # Set to false to prevent disable this plugin completely
   def self.enabled=(value)
-    @enabled = (value && true)
+    @enabled = !!value
   end
 
   # Return a boolean indicating whether the plugin is being mock tested
@@ -26,6 +26,6 @@ module Ajax
   # Use this to test the handling of URLs in various states and with different
   # HTTP request methods.
   def self.mocked=(value)
-    @mocked = (value && true)
+    @mocked = !!value
   end
 end

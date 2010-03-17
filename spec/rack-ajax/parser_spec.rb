@@ -12,6 +12,17 @@ describe Rack::Ajax::Parser, :type => :integration do
     create_app
   end
 
+  it "should be able to tell if a url is root" do
+    call_rack('/') { url_is_root? ? true : false }
+    @response.should be(true)
+
+    call_rack('/Beyonce') { url_is_root? ? true : false }
+    @response.should be(false)
+
+    call_rack('/#/Beyonce?query2') { url_is_root? ? true : false }
+    @response.should be(true)
+  end
+
   it "should redirect to hashed url from fragment" do
     call_rack('/Beyonce?page=1#/Akon') do
       redirect_to_hashed_url_from_fragment
