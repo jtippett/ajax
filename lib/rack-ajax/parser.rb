@@ -49,6 +49,12 @@ module Rack
         r302(::Ajax.hashed_url_from_fragment(@env['REQUEST_URI']))
       end
 
+      # Redirect to the hashed URL equivalent of the current traditional URL.
+      # The user has likely followed a traditional link or bookmark.
+      def redirect_to_hashed_url_equivalent
+        r302(::Ajax.hashed_url_from_traditional(@env['REQUEST_URI']))
+      end
+
       private
 
       def r302(url)

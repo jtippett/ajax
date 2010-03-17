@@ -13,14 +13,14 @@ describe Rack::Ajax::Parser, :type => :integration do
   end
 
   it "should be able to tell if a url is root" do
-    call_rack('/') { url_is_root? ? true : false }
-    @response.should be(true)
+    call_rack('/') { rack_response(url_is_root?) }
+    should_respond_with('true')
 
-    call_rack('/Beyonce') { url_is_root? ? true : false }
-    @response.should be(false)
+    call_rack('/Beyonce') { rack_response(url_is_root?) }
+    should_respond_with('false')
 
-    call_rack('/#/Beyonce?query2') { url_is_root? ? true : false }
-    @response.should be(true)
+    call_rack('/#/Beyonce?query2') { rack_response(url_is_root?) }
+    should_respond_with('true')
   end
 
   it "should redirect to hashed url from fragment" do
@@ -48,8 +48,7 @@ describe Rack::Ajax::Parser, :type => :integration do
     call_rack('/Beyonce?page=1#/Akon?query2') do
       rewrite_to_traditional_url_from_fragment
     end
-    env = YAML.load(@response[2][0])
-    env[Rack::Ajax::Parser::RACK_AJAX_REWRITE].should_not be(nil)
-    env[Rack::Ajax::Parser::RACK_AJAX_REWRITE].should == env['REQUEST_URI']
+    response_body_as_hash[Rack::Ajax::Parser::RACK_AJAX_REWRITE].should_not be(nil)
+    response_body_as_hash[Rack::Ajax::Parser::RACK_AJAX_REWRITE].should == response_body_as_hash['REQUEST_URI']
   end
 end

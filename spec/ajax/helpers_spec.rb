@@ -2,6 +2,20 @@ require 'spec_helper'
 
 context 'Ajax::Helpers' do
 
+  describe "(URL) hashed_url_from_traditional" do
+    it "should handle a query string" do
+      Ajax.hashed_url_from_traditional('/Beyonce?one=1').should == '/#/Beyonce?one=1'
+    end
+
+    it "should ignore the fragment" do
+      Ajax.hashed_url_from_traditional('/Beyonce?one=1#fragment').should == '/#/Beyonce?one=1'
+    end
+
+    it "should handle no query string" do
+      Ajax.hashed_url_from_traditional('/Beyonce').should == '/#/Beyonce'
+    end
+  end
+
   describe "(URL) hashed_url_from_fragment" do
     it "should strip double slashes" do
       Ajax.hashed_url_from_fragment('/Beyonce#/Akon').should == '/#/Akon'

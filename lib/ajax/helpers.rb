@@ -23,5 +23,13 @@ module Ajax
     def traditional_url_from_fragment(url)
       ('/' + (URI.parse(url).fragment || '')).sub /\/\//, '/'
     end
+
+    # Return a hashed URL formed from a traditional <tt>url</tt>
+    def hashed_url_from_traditional(url)
+      uri = URI.parse(url)
+      hashed_url = ('/#/' + (uri.path || '')).sub(/\/\//, '/')
+      hashed_url += ('?' + uri.query) unless uri.query.nil?
+      hashed_url
+    end
   end
 end
