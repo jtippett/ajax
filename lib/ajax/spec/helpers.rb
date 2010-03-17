@@ -18,15 +18,23 @@ module Ajax
         @rack = Rack::Ajax.new(@app, &block)
       end
 
-      def should_redirect_to(location, code)
+      def should_redirect_to(location, code=302)
         ret = @rack.call(@env)
-        code.should == ret[0]
-        location.should == ret[1]['Location']
+        ret[0].should == code
+        ret[1]['Location'].should == location
       end
 
       def should_rewrite_to(url)
         ret = @rack.call(@env)
-        url.should == ret[2]['REQUEST_URI']
+        ret[2]['REQUEST_URI'].should == url
+      end
+
+      def should_not_modify_request
+        ret = @rack.call(@env)
+        @env.each do |k,v|
+          ret[2][k].should == v
+        end
+        ret[0].should == 200
       end
     end
   end

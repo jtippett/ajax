@@ -2,11 +2,18 @@ require 'rack-ajax/parser'
 
 module Rack
   class Ajax
+    cattr_accessor :decision_tree
     attr_accessor :user, :request, :params
 
+    # If called with a block, executes that block as the "decision tree".
+    # This is useful when testing.
+    #
+    # To integrate Rack::Ajax into your app you should store the decision
+    # tree in a class-attribute <tt>decision_tree</tt>.  This
+    # decision tree will be used unless a block is provided.
     def initialize(app)
       @app = app
-      @decision_tree = block_given? ? Proc.new : nil
+      @decision_tree = block_given? ? Proc.new : self.class.decision_tree
     end
 
     def call(env)
