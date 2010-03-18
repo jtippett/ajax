@@ -55,6 +55,10 @@ module Rack
         r302(::Ajax.hashed_url_from_traditional(@env['REQUEST_URI']))
       end
 
+      def rewrite_to_render_ajax_framework
+        rewrite('/ajax/framework')
+      end
+
       private
 
       def r302(url)
