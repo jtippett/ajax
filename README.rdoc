@@ -1,0 +1,10 @@
+== Ajax
+
+A framework for converting a traditional Rails site to completely use AJAX.
+
+== Install
+
+Requires jQuery Center plugin from http://andreaslagerkvist.com/aFramework/Modules/Base/jquery.center.js
+Requires jQuery Address plugin v1.1 from http://www.asual.com/jquery/address/
+
+Copyright (c) 2010 Karl Varga, released under the MIT license

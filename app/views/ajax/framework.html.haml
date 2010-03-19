@@ -1,3 +1,6 @@
-= image_tag 'loading-icon-large', :id => 'loading-icon-large'
+= image_tag 'loading-icon-large.gif', :id => 'loading-icon-large', :alt => 'Loading...'
 :javascript
-  $('#loading-icon-large').
+  $(function() {
+    $('#loading-icon-large').center(true);
+    Ajax.loadPage($('#loading-icon-large').parent());
+  });
