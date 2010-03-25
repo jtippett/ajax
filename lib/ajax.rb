@@ -28,4 +28,29 @@ module Ajax
   def self.mocked=(value)
     @mocked = !!value
   end
+
+  # If you would prefer not to include the Ajax module in ActionController::Base
+  # you can include it in only those controllers you want with:
+  #
+  #   include Ajax
+  #
+  # Don't forget to disable <tt>init.rb</tt> in this case.
+  def self.included(klass)
+    klass.send(:include, Ajax::ActionController)
+  end
+
+  # Installs Ajax for Rails.
+  #
+  # This method is called by <tt>init.rb</tt>, which is run by Rails on startup.
+  #
+  # To prevent installing Ajax
+  def self.install
+    if defined?(Rails)
+      # Customize rendering.  Include custom headers and don't render the layout for AJAX.
+      ::ActionController::Base.send(:include, Ajax::ActionController)
+
+      # Insert the Rack::Ajax middleware to rewrite and handle requests
+      ::ActionController::Dispatcher.middleware.insert_before(Rack::Lock, Rack::Ajax)
+    end
+  end
 end
