@@ -29,6 +29,14 @@ module Ajax
     @mocked = !!value
   end
 
+  # Given a path, return a hash containing a tag(s) to set on the link.
+  #
+  # WillPaginate uses the <tt>rel</tt> tag on the page links, so I prefer
+  # 'data-ajax-link'.
+  def self.link_to_tag(address)
+    { 'data-ajax-link' => address }
+  end
+
   # If you would prefer not to include the Ajax module in ActionController::Base
   # you can include it in only those controllers you want with:
   #
@@ -51,6 +59,9 @@ module Ajax
 
       # Insert the Rack::Ajax middleware to rewrite and handle requests
       ::ActionController::Dispatcher.middleware.insert_before(Rack::Lock, Rack::Ajax)
+
+      # Add custom attributes to outgoing links
+      ::ActionView::Base.send(:include, Ajax::ActionView)
     end
   end
 end

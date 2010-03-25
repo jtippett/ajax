@@ -48,7 +48,7 @@ module Ajax
 
           # Add custom headers that contain information about the
           # layout of the current render.
-          response.headers["Ajax-Layout"] = default_layout.name
+          response.headers["Ajax-Layout"] = default_layout.to_s
         end
         render_without_ajax(options, extra_options, &block)
       end
