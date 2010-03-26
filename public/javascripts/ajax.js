@@ -26,7 +26,7 @@ var AjaxClass = function() {
   self.loadPage = function(event) {
     console.log('Address changed to '+$.address.value());
     console.log('Loading '+$.address.value());
-    self.container.load($.address.value(), self.processResponseHeaders);
+    self.container.load($.address.value(), self.requestParameters(), self.processResponseHeaders);
   };
 
   /**
@@ -34,7 +34,7 @@ var AjaxClass = function() {
    * sent with the AJAX request.
    */
   self.requestParameters = function() {
-    { layout: self.layout }
+    return { layout: self.layout };
   };
 
   /**
@@ -43,11 +43,12 @@ var AjaxClass = function() {
    * Set the page title.
    */
   self.processResponseHeaders = function(responseText, textStatus, request) {
-    var page_title = request.getResponseHeader("Ajax-Page-Title");
+    var page_title = request.getResponseHeader('Ajax-Page-Title');
     if (page_title !== null) {
+      console.log('Page title '+page_title);
       $.address.title(page_title);
     }
-    var layout = request.getResponseHeader("Ajax-Layout");
+    var layout = request.getResponseHeader('Ajax-Layout');
     if (layout !== null) {
       console.log('Using layout '+layout);
       self.layout = layout;
