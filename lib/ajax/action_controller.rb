@@ -21,7 +21,7 @@ module Ajax
       #     skip_filter :include_custom_response_headers
       #
       #     def include_custom_response_headers
-      #       response.headers['Ajax-Page-Title'] = title
+      #       response.headers['Ajax-Title'] = title
       #     end
       #   end
       #
@@ -29,7 +29,7 @@ module Ajax
       #
       # * <tt>:only/:except</tt> - Passed to the <tt>after_filter</tt> call.  Set which actions are verified.
       def before_render(method)
-        after_filter method if Ajax.is_enabled?
+        after_filter { | controller| controller.send(method) if controller.request.xhr? } if Ajax.is_enabled?
       end
 
       def ajax_layout(template_name)
@@ -68,27 +68,14 @@ module Ajax
           end
 
           default = pick_layout(options)
-          options[:layout] = layout_for_ajax(default.to_s)
+          default = default.path_without_format_and_extension unless default.nil?
+          ajax_layout = layout_for_ajax(default)
+          ajax_layout = ajax_layout.path_without_format_and_extension unless ajax_layout.nil?
+          options[:layout] = ajax_layout unless ajax_layout.nil?
 
           # Send the current layout in a custom response header
-          response.headers["Ajax-Layout"] = options[:layout].to_s
+          Ajax.set_response_layout(response, ajax_layout)
         end
-            # Rails.logger.debug("pick layout #{pick_layout(options).to_s}")
-            # Rails.logger.debug("active layout #{active_layout.to_s}")
-            # Rails.logger.debug("default layout #{default_layout.to_s}")
-            # Rails.logger.debug("default template #{default_template.to_s}")
-            # Rails.logger.debug("default template format #{default_template_format.to_s}")
-        #
-        #     # options = options.nil? ? {} : options
-        #     # if options.is_a?(Hash) && !options.has_key?(:layout)
-        #     #   layout = pick_layout(options).to_s
-        #     #   options[:layout] = layout.nil? ? nil : layout_for_ajax(layout)
-        #     # end
-        #     Rails.logger.debug("ajax layout #{options.inspect}")
-        #   end
-        #
-
-        # end
         render_without_ajax(options, extra_options, &block)
       end
 

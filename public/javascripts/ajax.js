@@ -1,32 +1,112 @@
 var AjaxClass = function() {
   var self = this;
-  self.container = undefined;
-  self.layout = undefined;
+
+  self.default_container = undefined;    // The default container
+  self.loading_icon = $('#loading-icon-small');
+  self.reset = function() {
+    self.container = undefined;          // The current container
+    self.tab = undefined;                // tab to activate
+    self.layout = undefined;             // the current layout
+    self.page_title = undefined;         // the current page layout
+  };
+  self.reset();
 
   self.init = function(options) {
-    self.container = options.container;
+    self.default_container = options.default_container;
 
+    // Configure jQuery Address
     $.address.history(true);
     $.address.change = self.loadPage;
+    // $.address.internalChange = self.internalChange;
+    // $.address.externalChange = self.externalChange;
 
-    var link_clicked = function(event) {
-      console.log('Clicked link '+$(this).attr('data-deep-link'));
-      $.address.value($(this).attr('data-deep-link'));
-      return false;
-    };
-    $('a[data-deep-link]').click(link_clicked).live('click', link_clicked);
+    // Bind a live event to all ajax-enabled links
+    $('a[data-deep-link]').click(self.linkClicked).live('click', self.linkClicked);
+  };
+
+  // self.internalChange = function(event) {
+  //   // beforeSend: function(){
+  //   console.log('Internal change');
+  //   return self.loadPage(event);
+  // };
+  //
+  // self.externalChange = function(event) {
+  //   // beforeSend: function(){
+  //   //    // Handle the beforeSend event
+  //   //  },
+  //       console.log('External change');
+  //   return self.loadPage(event);
+  // };
+
+  self.loadPage = function() {
+    //console.log('x '+e.pageX+' y '+e.pageY);
+
+    self.loading_icon.show();
+    $(document).bind('mousemove', self.updateImagePosition);
+
+    jQuery.ajax({
+      url: $.address.value(),
+      data: self.requestParameters(),
+      method: 'GET',
+      beforeSend: function(XMLHttpRequest) {
+        XMLHttpRequest.setRequestHeader('AJAX_LAYOUT', 'boo');
+      },
+      success: self.responseHandler,
+      complete: function(XMLHttpRequest, responseText) {
+        $(document).unbind('mousemove', self.updateImagePosition);
+        self.loading_icon.hide()
+      }
+    });
+
+    return true;
+  };
+
+  self.updateImagePosition = function(e) {
+    //console.log((e.pageY + 10)+'px');
+    $('#loading-icon-small').css({
+      layer: 100,
+      position: 'absolute',
+      top: e.pageY,
+      left: e.pageX
+    });
+  }
+
+  /**
+   * linkClicked
+   *
+   * Called when the an AJAX-enabled link is clicked.
+   *
+   */
+  self.linkClicked = function(event) {
+    console.log('Clicked link '+$(this).attr('data-deep-link'));
+    $.address.value($(this).attr('data-deep-link'));
+    return false;
   };
 
   /**
-   * loadPage
+   * responseHandler
    *
-   * Called when the address changes.
+   * Process the response of an AJAX call and put the contents in
+   * the appropriate container, activate tabs etc.
    *
    */
-  self.loadPage = function(event) {
-    console.log('Address changed to '+$.address.value());
-    console.log('Loading '+$.address.value());
-    self.container.load($.address.value(), self.requestParameters(), self.processResponseHeaders);
+  self.responseHandler = function(responseText, textStatus, XMLHttpRequest) {
+    self.reset();
+    self.processResponseHeaders(XMLHttpRequest);
+
+    var container = self.container || self.default_container;
+    console.log('Using container '+container.selector);
+    container.html(responseText);
+
+    console.log('Using layout '+self.layout);
+    if (self.page_title !== undefined) {
+      console.log('Using page title '+self.page_title);
+      $.address.title(self.page_title);
+    }
+    if (self.tab !== undefined) {
+      console.log('Activating tab '+self.tab);
+      self.tab.trigger('activate');
+    }
   };
 
   /**
@@ -34,7 +114,11 @@ var AjaxClass = function() {
    * sent with the AJAX request.
    */
   self.requestParameters = function() {
-    return { layout: self.layout };
+    params = {};
+    if (self.layout !== undefined) {
+      params.layout = self.layout;
+    }
+    return jQuery.param(params);
   };
 
   /**
@@ -42,16 +126,22 @@ var AjaxClass = function() {
    *
    * Set the page title.
    */
-  self.processResponseHeaders = function(responseText, textStatus, request) {
-    var page_title = request.getResponseHeader('Ajax-Page-Title');
+  self.processResponseHeaders = function(XMLHttpRequest) {
+    var page_title = XMLHttpRequest.getResponseHeader('Ajax-Title');
     if (page_title !== null) {
-      console.log('Page title '+page_title);
-      $.address.title(page_title);
+      self.page_title = page_title;
     }
-    var layout = request.getResponseHeader('Ajax-Layout');
+    var layout = XMLHttpRequest.getResponseHeader('Ajax-Layout');
     if (layout !== null) {
-      console.log('Using layout '+layout);
       self.layout = layout;
+    }
+    var container = XMLHttpRequest.getResponseHeader('Ajax-Container');
+    if (container !== null) {
+      self.container = $(container);
+    }
+    var tab = XMLHttpRequest.getResponseHeader('Ajax-Tab');
+    if (tab !== null) {
+      self.tab = $(tab);
     }
   };
 };
@@ -59,6 +149,6 @@ var AjaxClass = function() {
 var Ajax = new AjaxClass();
 $(function() {
   Ajax.init({
-    container: $('#main')
+    default_container: $('#main')
   });
 });

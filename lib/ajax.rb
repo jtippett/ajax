@@ -47,6 +47,28 @@ module Ajax
     klass.send(:include, Ajax::ActionController)
   end
 
+  # Helper to set the container to receive the response when the page is
+  # rendered.
+  def self.set_response_container(response, container)
+    response.headers['Ajax-Container'] = container
+  end
+
+  # Set the name of the current layout in the response headers.
+  def self.set_response_layout(response, layout)
+    response.headers['Ajax-Layout'] = layout
+  end
+
+  # Set a jQuery selector that identifies a tab to activate when the response
+  # is rendered.
+  def self.set_response_tab(response, tab)
+    response.headers['Ajax-Tab'] = tab
+  end
+
+  # Set the page title of the page to be rendered.
+  def self.set_response_title(response, title)
+    response.headers['Ajax-Title'] = title
+  end
+
   # Installs Ajax for Rails.
   #
   # This method is called by <tt>init.rb</tt>, which is run by Rails on startup.
