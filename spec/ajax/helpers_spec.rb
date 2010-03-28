@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-context 'Ajax::Helpers' do
+context 'Ajax::UrlHelpers' do
 
   describe "(URL) hashed_url_from_traditional" do
     it "should handle a query string" do

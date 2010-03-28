@@ -3,13 +3,6 @@ var AjaxClass = function() {
 
   self.default_container = undefined;    // The default container
   self.loading_icon = $('#loading-icon-small');
-  self.reset = function() {
-    self.container = undefined;          // The current container
-    self.tab = undefined;                // tab to activate
-    self.layout = undefined;             // the current layout
-    self.page_title = undefined;         // the current page layout
-  };
-  self.reset();
 
   self.init = function(options) {
     self.default_container = options.default_container;
@@ -91,21 +84,20 @@ var AjaxClass = function() {
    *
    */
   self.responseHandler = function(responseText, textStatus, XMLHttpRequest) {
-    self.reset();
-    self.processResponseHeaders(XMLHttpRequest);
+    var data = self.processResponseHeaders(XMLHttpRequest);
+    var container = data.container === undefined ? self.default_container : $(data.container);
 
-    var container = self.container || self.default_container;
-    console.log('Using container '+container.selector);
-    container.html(responseText);
+    console.log('Using container ',container.selector);
+    console.log('Set data ',data);
+    container.html(responseText).data('ajax', data);
 
-    console.log('Using layout '+self.layout);
-    if (self.page_title !== undefined) {
-      console.log('Using page title '+self.page_title);
-      $.address.title(self.page_title);
+    if (data.title !== undefined) {
+      console.log('Using page title '+data.title);
+      $.address.title(data.title);
     }
-    if (self.tab !== undefined) {
-      console.log('Activating tab '+self.tab);
-      self.tab.trigger('activate');
+    if (data.tab !== undefined) {
+      console.log('Activating tab '+data.tab);
+      $(data.tab).trigger('activate');
     }
   };
 
@@ -114,11 +106,7 @@ var AjaxClass = function() {
    * sent with the AJAX request.
    */
   self.requestParameters = function() {
-    params = {};
-    if (self.layout !== undefined) {
-      params.layout = self.layout;
-    }
-    return jQuery.param(params);
+    return '';
   };
 
   /**
@@ -127,22 +115,16 @@ var AjaxClass = function() {
    * Set the page title.
    */
   self.processResponseHeaders = function(XMLHttpRequest) {
-    var page_title = XMLHttpRequest.getResponseHeader('Ajax-Title');
-    if (page_title !== null) {
-      self.page_title = page_title;
-    }
-    var layout = XMLHttpRequest.getResponseHeader('Ajax-Layout');
-    if (layout !== null) {
-      self.layout = layout;
-    }
-    var container = XMLHttpRequest.getResponseHeader('Ajax-Container');
-    if (container !== null) {
-      self.container = $(container);
-    }
-    var tab = XMLHttpRequest.getResponseHeader('Ajax-Tab');
-    if (tab !== null) {
-      self.tab = $(tab);
-    }
+    var data = {};
+    var value;
+    $.each(['title', 'layout', 'container', 'tab', 'controller'], function(idx, header) {
+      titleized = header.charAt(0).toUpperCase() + header.slice(1)
+      value = XMLHttpRequest.getResponseHeader('Ajax-'+titleized);
+      if (value !== null) {
+        data[header] = value;
+      }
+    });
+    return data;
   };
 };
 

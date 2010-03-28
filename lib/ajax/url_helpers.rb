@@ -1,5 +1,5 @@
 module Ajax
-  module Helpers
+  module UrlHelpers
 
     # Return a boolean indicating whether the given URL points to the
     # root path.

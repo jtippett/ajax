@@ -1,7 +1,11 @@
-require 'ajax/helpers'
+require 'ajax/url_helpers'
+require 'ajax/rails_helpers'
+require 'ajax/ui_helpers'
 
 module Ajax
-  extend Helpers
+  extend UrlHelpers
+  extend RailsHelpers
+  extend UiHelpers
 
   # Return a boolean indicating whether the plugin is currently enabled
   def self.is_enabled?
@@ -29,14 +33,6 @@ module Ajax
     @mocked = !!value
   end
 
-  # Given a path, return a hash containing a tag(s) to set on the link.
-  #
-  # WillPaginate uses the <tt>rel</tt> tag on the page links, so I prefer
-  # 'data-ajax-link'.
-  def self.link_to_tag(address)
-    { 'data-ajax-link' => address }
-  end
-
   # If you would prefer not to include the Ajax module in ActionController::Base
   # you can include it in only those controllers you want with:
   #
@@ -45,28 +41,6 @@ module Ajax
   # Don't forget to disable <tt>init.rb</tt> in this case.
   def self.included(klass)
     klass.send(:include, Ajax::ActionController)
-  end
-
-  # Helper to set the container to receive the response when the page is
-  # rendered.
-  def self.set_response_container(response, container)
-    response.headers['Ajax-Container'] = container
-  end
-
-  # Set the name of the current layout in the response headers.
-  def self.set_response_layout(response, layout)
-    response.headers['Ajax-Layout'] = layout
-  end
-
-  # Set a jQuery selector that identifies a tab to activate when the response
-  # is rendered.
-  def self.set_response_tab(response, tab)
-    response.headers['Ajax-Tab'] = tab
-  end
-
-  # Set the page title of the page to be rendered.
-  def self.set_response_title(response, title)
-    response.headers['Ajax-Title'] = title
   end
 
   # Installs Ajax for Rails.

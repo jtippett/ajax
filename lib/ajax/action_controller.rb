@@ -75,6 +75,9 @@ module Ajax
 
           # Send the current layout in a custom response header
           Ajax.set_response_layout(response, ajax_layout)
+
+          # Send the current controller in a custom response header
+          Ajax.set_response_controller(response, self.class.controller_name)
         end
         render_without_ajax(options, extra_options, &block)
       end
