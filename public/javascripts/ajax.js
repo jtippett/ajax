@@ -24,7 +24,10 @@ var AjaxClass = function() {
       data: self.requestParameters(),
       method: 'GET',
       beforeSend: function(XMLHttpRequest) {
-        XMLHttpRequest.setRequestHeader('AJAX_LAYOUT', 'boo');
+        // Set the AJAX_INFO request header
+        var data = self.default_container.data('ajax-info');
+        if (data === undefined) { data = {}; }
+        XMLHttpRequest.setRequestHeader('AJAX_INFO', $.toJSON(data));
       },
       success: self.responseHandler,
       complete: function(XMLHttpRequest, responseText) {
@@ -32,7 +35,12 @@ var AjaxClass = function() {
         self.loading_icon.hide()
       },
       error: function(XMLHttpRequest, textStatus, errorThrown) {
-        self.responseHandler(XMLHttpRequest.responseText, textStatus, XMLHttpRequest);
+        // Handle error page
+        var responseText = $(XMLHttpRequest.responseText);
+        if ($(responseText).find('body').size() > 0) {
+          responseText = $(responseText).find('body').first();
+        }
+        self.responseHandler(responseText, textStatus, XMLHttpRequest);
       }
     });
 
@@ -74,7 +82,7 @@ var AjaxClass = function() {
 
     console.log('Using container ',container.selector);
     console.log('Set data ',data);
-    container.html(responseText).data('ajax', data);
+    container.html(responseText).data('ajax-info', data);
 
     if (data.title !== undefined) {
       console.log('Using page title '+data.title);
@@ -109,7 +117,11 @@ var AjaxClass = function() {
   self.processResponseHeaders = function(XMLHttpRequest) {
     var data = XMLHttpRequest.getResponseHeader('Ajax-Info');
     if (data !== null) {
-      data = jQuery.parseJSON(data);
+      try { data = jQuery.parseJSON(data); }
+      catch(e) {
+        console.log('Failed to parse Ajax-Info header as JSON!  Got ' + data);
+        data = {};
+      }
     } else {
       data = {};
     }
