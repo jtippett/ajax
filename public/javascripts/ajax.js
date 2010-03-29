@@ -10,30 +10,12 @@ var AjaxClass = function() {
     // Configure jQuery Address
     $.address.history(true);
     $.address.change = self.loadPage;
-    // $.address.internalChange = self.internalChange;
-    // $.address.externalChange = self.externalChange;
 
     // Bind a live event to all ajax-enabled links
     $('a[data-deep-link]').click(self.linkClicked).live('click', self.linkClicked);
   };
 
-  // self.internalChange = function(event) {
-  //   // beforeSend: function(){
-  //   console.log('Internal change');
-  //   return self.loadPage(event);
-  // };
-  //
-  // self.externalChange = function(event) {
-  //   // beforeSend: function(){
-  //   //    // Handle the beforeSend event
-  //   //  },
-  //       console.log('External change');
-  //   return self.loadPage(event);
-  // };
-
   self.loadPage = function() {
-    //console.log('x '+e.pageX+' y '+e.pageY);
-
     self.loading_icon.show();
     $(document).bind('mousemove', self.updateImagePosition);
 
@@ -48,6 +30,9 @@ var AjaxClass = function() {
       complete: function(XMLHttpRequest, responseText) {
         $(document).unbind('mousemove', self.updateImagePosition);
         self.loading_icon.hide()
+      },
+      error: function(XMLHttpRequest, textStatus, errorThrown) {
+        self.responseHandler(XMLHttpRequest.responseText, textStatus, XMLHttpRequest);
       }
     });
 
@@ -99,6 +84,13 @@ var AjaxClass = function() {
       console.log('Activating tab '+data.tab);
       $(data.tab).trigger('activate');
     }
+
+    // Set cookies
+    var cookie = XMLHttpRequest.getResponseHeader('Set-Cookie');
+    if (cookie !== null) {
+      console.log('Setting cookie');
+      document.cookie = cookie;
+    }
   };
 
   /**
@@ -115,15 +107,12 @@ var AjaxClass = function() {
    * Set the page title.
    */
   self.processResponseHeaders = function(XMLHttpRequest) {
-    var data = {};
-    var value;
-    $.each(['title', 'layout', 'container', 'tab', 'controller'], function(idx, header) {
-      titleized = header.charAt(0).toUpperCase() + header.slice(1)
-      value = XMLHttpRequest.getResponseHeader('Ajax-'+titleized);
-      if (value !== null) {
-        data[header] = value;
-      }
-    });
+    var data = XMLHttpRequest.getResponseHeader('Ajax-Info');
+    if (data !== null) {
+      data = jQuery.parseJSON(data);
+    } else {
+      data = {};
+    }
     return data;
   };
 };

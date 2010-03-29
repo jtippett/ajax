@@ -3,6 +3,17 @@ module Ajax
     def self.included(klass)
       klass.class_eval do
         alias_method_chain :link_to, :ajax
+
+        include Helpers
+      end
+    end
+
+    module Helpers
+
+      # Set a custom response header if the request is AJAX.
+      def ajax_header(key, value)
+        return unless Ajax.is_enabled? && request.xhr?
+        Ajax.set_header(response, key, value)
       end
     end
 

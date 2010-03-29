@@ -3,41 +3,54 @@ module Ajax
     def self.included(klass)
       klass.class_eval do
         alias_method_chain :render, :ajax
+        append_after_filter :process_response_headers
       end
       klass.extend(ClassMethods)
     end
 
     module ClassMethods
-      # Specify a method to be called before render is invoked.  This method
-      # will handle setting custom response headers that the Ajax framework
-      # can use.  No filter will be created if Ajax is not enabled.
+
+      # Set a custom response header if the request is AJAX.
       #
-      # Example:
+      # Call with <tt>key</tt> and optional <tt>value</tt>.  Pass a
+      # block to yield a dynamic value.
       #
-      #   class HomeController < ApplicationController
-      #     before_render :include_custom_response_headers
-      #
-      #     # you can disable calling this method on a controller-by-controller basis:
-      #     skip_filter :include_custom_response_headers
-      #
-      #     def include_custom_response_headers
-      #       response.headers['Ajax-Title'] = title
-      #     end
-      #   end
-      #
-      # Valid Options:
-      #
-      # * <tt>:only/:except</tt> - Passed to the <tt>after_filter</tt> call.  Set which actions are verified.
-      def before_render(method)
-        after_filter { | controller| controller.send(method) if controller.request.xhr? } if Ajax.is_enabled?
+      # Accepts :only and :except conditions because we create
+      # an after_filter.
+      def ajax_header(*args, &block)
+        return unless Ajax.is_enabled?
+
+        options = args.extract_options!
+        key, value = args.shift, args.shift
+        value = block_given? ? Proc.new : value
+
+        prepend_after_filter(options) do |controller|
+          if controller.request.xhr?
+            value = value.is_a?(Proc) ? controller.instance_eval(&value) : value
+            Ajax.set_header(controller.response, key, value)
+          end
+        end
       end
 
+      # Set the layout to use for AJAX requests.
+      #
+      # By default we look in layouts/ajax/ for this controllers default
+      # layout and render that.  If it can't be found, the default layout
+      # is used.
       def ajax_layout(template_name)
         write_inheritable_attribute(:ajax_layout, template_name)
       end
     end
 
     protected
+
+      # Make sure the response header is a string
+      def process_response_headers
+        case response.headers['Ajax-Info']
+          when Hash, Array
+            response.headers['Ajax-Info'] = response.headers['Ajax-Info'].to_json
+        end
+      end
 
       #
       # Intercept rendering to customize the headers and layout handling
@@ -73,11 +86,9 @@ module Ajax
           ajax_layout = ajax_layout.path_without_format_and_extension unless ajax_layout.nil?
           options[:layout] = ajax_layout unless ajax_layout.nil?
 
-          # Send the current layout in a custom response header
-          Ajax.set_response_layout(response, ajax_layout)
-
-          # Send the current controller in a custom response header
-          Ajax.set_response_controller(response, self.class.controller_name)
+          # Send the current layout and controller in a custom response header
+          Ajax.set_header(response, :layout, ajax_layout)
+          Ajax.set_header(response, :controller, self.class.controller_name)
         end
         render_without_ajax(options, extra_options, &block)
       end
