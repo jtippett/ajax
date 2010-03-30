@@ -102,7 +102,7 @@ module Ajax
       def layout_for_ajax(default) #:nodoc:
         ajax_layout = self.class.read_inheritable_attribute(:ajax_layout)
         if ajax_layout.nil? || !(ajax_layout =~ /^layouts\/ajax/)
-          find_layout("layouts/ajax/#{default.sub(/layouts(\/)?/, '')}", default_template_format)
+          find_layout("layouts/ajax/#{default.sub(/layouts(\/)?/, '')}", default_template_format) unless default.nil?
         else
           ajax_layout
         end

@@ -16,11 +16,13 @@ var AjaxClass = function() {
   };
 
   self.loadPage = function() {
+    if (document.location.pathname != '/') { return false; }
+
     self.loading_icon.show();
     $(document).bind('mousemove', self.updateImagePosition);
 
     jQuery.ajax({
-      url: $.address.value(),
+      url: $.address.value().replace(/\/\//, '/'),
       data: self.requestParameters(),
       method: 'GET',
       beforeSend: function(XMLHttpRequest) {
@@ -61,11 +63,18 @@ var AjaxClass = function() {
    * linkClicked
    *
    * Called when the an AJAX-enabled link is clicked.
+   * Redirect back to the root URL if we are not on it.
    *
    */
   self.linkClicked = function(event) {
-    console.log('Clicked link '+$(this).attr('data-deep-link'));
-    $.address.value($(this).attr('data-deep-link'));
+    if (document.location.pathname != '/') {
+      var url = $.address.baseURL().replace(new RegExp(document.location.pathname), '')
+      url += '/#/' + $(this).attr('data-deep-link');
+      url.replace(/\/\//, '/');
+      document.location = url;
+    } else {
+      $.address.value($(this).attr('data-deep-link'));
+    }
     return false;
   };
 
@@ -120,18 +129,11 @@ var AjaxClass = function() {
       try { data = jQuery.parseJSON(data); }
       catch(e) {
         console.log('Failed to parse Ajax-Info header as JSON!  Got ' + data);
-        data = {};
       }
-    } else {
+    }
+    if (data === null || data === undefined) {
       data = {};
     }
     return data;
   };
 };
-
-var Ajax = new AjaxClass();
-$(function() {
-  Ajax.init({
-    default_container: $('#main')
-  });
-});

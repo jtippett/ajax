@@ -27,7 +27,10 @@ module Ajax
       # in the <tt>link_to</tt> <tt>html_options</tt>.
       #
       # To turn off deep linking for a URL, pass <tt>:traditional => true</tt> or
-      # <tt>:data-deep-link => false</tt>.
+      # <tt>:data-deep-link => nil</tt>.
+      #
+      # Any paths matching the paths in Ajax.exclude_paths will automatically be
+      # linked to traditionally.
       def link_to_with_ajax(*args, &block)
         if Ajax.is_enabled? && !block_given?
           options      = args.second || {}
@@ -37,10 +40,14 @@ module Ajax
           # Insert the deep link unless the URL is traditional
           if !html_options.has_key?('data-deep-link') && !html_options.delete('traditional')
             path = url_for(options)
-            if path.match(%r[^(http:\/\/[^\/]*)(\/?.*)])
-              path = $2
+
+            # Is this path to be excluded?
+            unless Ajax.exclude_path?(path)
+              if path.match(%r[^(http:\/\/[^\/]*)(\/?.*)])
+                path = $2
+              end
+              html_options['data-deep-link'] = path
             end
-            html_options['data-deep-link'] = path
           end
           args[2] = html_options
         end
