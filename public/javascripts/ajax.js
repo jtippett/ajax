@@ -4,6 +4,12 @@ var AjaxClass = function() {
   self.default_container = undefined;    // The default container
   self.loading_icon = $('#loading-icon-small');
 
+  /**
+   * Initialize
+   *
+   * Bind event handlers and setup jQuery Address.
+   *
+   */
   self.init = function(options) {
     self.default_container = options.default_container;
 
@@ -15,6 +21,19 @@ var AjaxClass = function() {
     $('a[data-deep-link]').click(self.linkClicked).live('click', self.linkClicked);
   };
 
+  /**
+   * loadPage
+   *
+   * Request new content and insert it into the document.  If the response
+   * Ajax-Info header contains and of the following we take the associated
+   * action:
+   *
+   *  [title] String, Set the page title
+   *  [tab]   jQuery selector, trigger the 'activate' event on the tab
+   *  [container] The container to receive the content, or <tt>main</tt> by default.
+   *
+   *  Cookies in the response are automatically set on the document.cookie.
+   */
   self.loadPage = function() {
     if (document.location.pathname != '/') { return false; }
 
@@ -23,14 +42,8 @@ var AjaxClass = function() {
 
     jQuery.ajax({
       url: $.address.value().replace(/\/\//, '/'),
-      data: self.requestParameters(),
       method: 'GET',
-      beforeSend: function(XMLHttpRequest) {
-        // Set the AJAX_INFO request header
-        var data = self.default_container.data('ajax-info');
-        if (data === undefined) { data = {}; }
-        XMLHttpRequest.setRequestHeader('AJAX_INFO', $.toJSON(data));
-      },
+      beforeSend: self.setRequestHeaders,
       success: self.responseHandler,
       complete: function(XMLHttpRequest, responseText) {
         $(document).unbind('mousemove', self.updateImagePosition);
@@ -49,15 +62,22 @@ var AjaxClass = function() {
     return true;
   };
 
-  self.updateImagePosition = function(e) {
-    //console.log((e.pageY + 10)+'px');
-    $('#loading-icon-small').css({
-      layer: 100,
-      position: 'absolute',
-      top: e.pageY,
-      left: e.pageX
-    });
-  }
+  /**
+   * responseHandler
+   *
+   * Set the AJAX_INFO request header.  This includes all the data
+   * defined on the main (or receiving) container, plus some other
+   * useful information like the:
+   *
+   * referer - the full referer URL including the hashed part.
+   *
+   */
+  self.setRequestHeaders = function(XMLHttpRequest) {
+    var data = self.default_container.data('ajax-info');
+    if (data === undefined) { data = {}; }
+    data['referer'] = document.location;
+    XMLHttpRequest.setRequestHeader('AJAX_INFO', $.toJSON(data));
+  };
 
   /**
    * linkClicked
@@ -111,14 +131,6 @@ var AjaxClass = function() {
   };
 
   /**
-   * Return an Array or string of query parameters that will be
-   * sent with the AJAX request.
-   */
-  self.requestParameters = function() {
-    return '';
-  };
-
-  /**
    * Process the response headers.
    *
    * Set the page title.
@@ -136,4 +148,17 @@ var AjaxClass = function() {
     }
     return data;
   };
+
+  /**
+   * Update the position of the loading icon.
+   */
+  self.updateImagePosition = function(e) {
+    //console.log((e.pageY + 10)+'px');
+    $('#loading-icon-small').css({
+      layer: 100,
+      position: 'absolute',
+      top: e.pageY,
+      left: e.pageX
+    });
+  }
 };

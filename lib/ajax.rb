@@ -58,6 +58,9 @@ module Ajax
 
       # Add custom attributes to outgoing links
       ::ActionView::Base.send(:include, Ajax::ActionView)
+
+      # Rewrite some redirects
+      ::ActionController::Response.send(:include, Ajax::ActionController::Response)
     end
   end
 end
