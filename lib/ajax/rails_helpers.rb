@@ -25,14 +25,14 @@ module Ajax
     # <tt>paths</tt> a list of String or Regexp instances that are matched
     # against each REQUEST_PATH.
     #
-    # If the path is a string it is used to create a regular expression that
-    # is able to match when the path includes the host and protocol.
+    # The string and regex paths are modified to match full URLs by prepending
+    # them with the appropriate regular expression.
     def exclude_paths(paths=nil)
       if !instance_variable_defined?(:@exclude_paths)
         @exclude_paths = []
       end
       (paths || []).each do |path|
-        @exclude_paths << (path.is_a?(Regexp) ? path : /^(\w+\:\/\/[^\/]+\/?)?#{path}$/)
+        @exclude_paths << /^(\w+\:\/\/[^\/]+\/?)?#{path.to_s}$/
       end
       @exclude_paths
     end

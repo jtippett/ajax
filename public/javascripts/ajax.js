@@ -74,7 +74,7 @@ var AjaxClass = function() {
    */
   self.setRequestHeaders = function(XMLHttpRequest) {
     var data = self.default_container.data('ajax-info');
-    if (data === undefined) { data = {}; }
+    if (data === undefined || data === null) { data = {}; }
     data['referer'] = document.location;
     XMLHttpRequest.setRequestHeader('AJAX_INFO', $.toJSON(data));
   };
