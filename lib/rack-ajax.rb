@@ -31,7 +31,9 @@ module Rack
       rack_response = @parser.instance_eval(&@decision_tree)
 
       # Clear the value of session[:redirected_to]
-      env['rack.session']['redirected_to'] = env['rack.session'][:redirected_to] = nil
+      unless env['rack.session'].nil?
+        env['rack.session']['redirected_to'] = env['rack.session'][:redirected_to] = nil
+      end
 
       # If we are testing our Rack::Ajax middleware, return
       # a Rack response now rather than falling through
