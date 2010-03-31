@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 context 'Ajax::UrlHelpers' do
+  DOMAINS = %w[musicsocial.com.local altnet.com amusicstreamingservice.com stage.altnet.com rails1.creagency.com.au]
 
   describe "(URL) hashed_url_from_traditional" do
     it "should handle a query string" do
@@ -14,6 +15,12 @@ context 'Ajax::UrlHelpers' do
     it "should handle no query string" do
       Ajax.hashed_url_from_traditional('/Beyonce').should == '/#/Beyonce'
     end
+
+    DOMAINS.each do |domain|
+      it "should work for domain #{domain}" do
+        Ajax.hashed_url_from_traditional("http://#{domain}/playlists").should == "http://#{domain}/#/playlists"
+      end
+    end
   end
 
   describe "(URL) hashed_url_from_fragment" do
@@ -25,6 +32,14 @@ context 'Ajax::UrlHelpers' do
     it "should handle no fragment" do
       Ajax.hashed_url_from_fragment('/Beyonce').should == '/#/'
     end
+
+    DOMAINS.each do |domain|
+      it "should work for domain #{domain}" do
+        Ajax.hashed_url_from_fragment("http://#{domain}").should == "http://#{domain}/#/"
+        Ajax.hashed_url_from_fragment("http://#{domain}/").should == "http://#{domain}/#/"
+        Ajax.hashed_url_from_fragment("http://#{domain}/Beyonce/#/playlists").should == "http://#{domain}/#/playlists"
+      end
+    end
   end
 
   describe "(boolean) url_is_root?" do
@@ -35,6 +50,10 @@ context 'Ajax::UrlHelpers' do
 
     it "should detect non-root urls" do
       Ajax.url_is_root?('/Beyonce').should be(false)
+    end
+
+    it "should support full URLs" do
+      Ajax.is_hashed_url?('http://musicsocial.com.local/#/playlists').should be(true)
     end
   end
 
@@ -52,6 +71,13 @@ context 'Ajax::UrlHelpers' do
       Ajax.is_hashed_url?('/Beyonce#/Akon').should be(true)
       Ajax.is_hashed_url?('/#/Akon').should be(true)
     end
+
+    DOMAINS.each do |domain|
+      it "should work for domain #{domain}" do
+        Ajax.is_hashed_url?("http://#{domain}/#/playlists").should be(true)
+        Ajax.is_hashed_url?("http://#{domain}/playlists").should be(false)
+      end
+    end
   end
 
   describe "(URL) traditional_url_from_fragment" do
@@ -63,6 +89,13 @@ context 'Ajax::UrlHelpers' do
 
     it "should handle no fragment" do
       Ajax.traditional_url_from_fragment('/Beyonce').should == '/'
+    end
+
+    DOMAINS.each do |domain|
+      it "should work for domain #{domain}" do
+        Ajax.traditional_url_from_fragment("http://#{domain}/Beyonce/#playlists").should == "http://#{domain}/playlists"
+        Ajax.traditional_url_from_fragment("http://#{domain}/Beyonce/#/playlists").should == "http://#{domain}/playlists"
+      end
     end
   end
 end

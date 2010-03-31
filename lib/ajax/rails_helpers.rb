@@ -2,17 +2,16 @@ module Ajax
   module RailsHelpers
     def set_header(object, key, value)
       headers = object.is_a?(::ActionController::Response) ? object.headers : object
-      headers["Ajax-Info"] = object.headers["Ajax-Info"] || {}
+      unless headers["Ajax-Info"].is_a?(Hash)
+        headers["Ajax-Info"] = {}
+      end
       headers["Ajax-Info"][key.to_s] = value
     end
 
     def get_header(object, key)
       headers = object.is_a?(::ActionController::Request) ? object.headers : object
-      if headers["Ajax-Info"].nil?
+      unless headers["Ajax-Info"].is_a?(Hash)
         headers["Ajax-Info"] = {}
-      elsif headers["Ajax-Info"].is_a?(String)
-        require 'json'
-        headers["Ajax-Info"] = (JSON.parse(headers['HTTP_AJAX_INFO']) rescue {})
       end
       headers['Ajax-Info'][key.to_s]
     end

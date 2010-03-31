@@ -41,14 +41,4 @@ describe Rack::Ajax::Parser, :type => :integration do
     call_rack('/') { rack_response('test') }
     should_respond_with('test')
   end
-
-  # We only get the environment returned to us on rewrites,
-  # so do a rewrite and inspect the result manually.
-  it "should set a custom header on rewrites" do
-    call_rack('/Beyonce?page=1#/Akon?query2') do
-      rewrite_to_traditional_url_from_fragment
-    end
-    response_body_as_hash[Rack::Ajax::Parser::RACK_AJAX_REWRITE].should_not be(nil)
-    response_body_as_hash[Rack::Ajax::Parser::RACK_AJAX_REWRITE].should == response_body_as_hash['REQUEST_URI']
-  end
 end

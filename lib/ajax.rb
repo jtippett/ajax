@@ -3,9 +3,23 @@ require 'ajax/rails_helpers'
 require 'ajax/ui_helpers'
 
 module Ajax
+  # Set to the Rails logger by default, assign nil to turn off logging
+  class << self
+    attr_writer :logger
+  end
+
   extend UrlHelpers
   extend RailsHelpers
   extend UiHelpers
+
+  # Dummy a logger if logging is turned off of if Ajax isn't enabled
+  def self.logger
+    if !@logger.nil? && is_enabled?
+      @logger
+    elsif @logger.nil?
+      @logger = Class.new { def method_missing(*args); end; }.new
+    end
+  end
 
   # Return a boolean indicating whether the plugin is currently enabled
   def self.is_enabled?
@@ -50,17 +64,16 @@ module Ajax
   # To prevent installing Ajax
   def self.install
     if defined?(Rails)
+      Ajax.logger = Rails.logger
+
       # Customize rendering.  Include custom headers and don't render the layout for AJAX.
       ::ActionController::Base.send(:include, Ajax::ActionController)
 
       # Insert the Rack::Ajax middleware to rewrite and handle requests
-      ::ActionController::Dispatcher.middleware.insert_before(Rack::Lock, Rack::Ajax)
+      ::ActionController::Dispatcher.middleware.insert_before(Rack::Head, Rack::Ajax)
 
       # Add custom attributes to outgoing links
       ::ActionView::Base.send(:include, Ajax::ActionView)
-
-      # Rewrite some redirects
-      ::ActionController::Response.send(:include, Ajax::ActionController::Response)
     end
   end
 end

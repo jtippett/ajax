@@ -69,13 +69,13 @@ var AjaxClass = function() {
    * defined on the main (or receiving) container, plus some other
    * useful information like the:
    *
-   * referer - the full referer URL including the hashed part.
+   * referer - the current document.location
    *
    */
   self.setRequestHeaders = function(XMLHttpRequest) {
     var data = self.default_container.data('ajax-info');
     if (data === undefined || data === null) { data = {}; }
-    data['referer'] = document.location;
+    data['referer'] = document.location.href;
     XMLHttpRequest.setRequestHeader('AJAX_INFO', $.toJSON(data));
   };
 
@@ -140,7 +140,7 @@ var AjaxClass = function() {
     if (data !== null) {
       try { data = jQuery.parseJSON(data); }
       catch(e) {
-        console.log('Failed to parse Ajax-Info header as JSON!  Got ' + data);
+        console.log('Failed to parse Ajax-Info header as JSON!', data);
       }
     }
     if (data === null || data === undefined) {

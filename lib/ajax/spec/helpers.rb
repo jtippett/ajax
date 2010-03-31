@@ -30,8 +30,6 @@ module Ajax
 
         # Check custom headers
         response_body_as_hash['REQUEST_URI'].should == url
-        response_body_as_hash[Rack::Ajax::Parser::RACK_AJAX_REWRITE].should_not be(nil)
-        response_body_as_hash[Rack::Ajax::Parser::RACK_AJAX_REWRITE].should == response_body_as_hash['REQUEST_URI']
       end
 
       def should_not_modify_request
@@ -43,8 +41,6 @@ module Ajax
         # that we don't have the custom rewrite header.
         if !@env.nil?
           @env.each { |k,v| response_body_as_hash.should == v }
-        else
-          response_body_as_hash[Rack::Ajax::Parser::RACK_AJAX_REWRITE].should be(nil)
         end
       end
 

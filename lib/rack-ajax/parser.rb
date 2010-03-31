@@ -5,10 +5,6 @@
 module Rack
   class Ajax
     class Parser
-      #
-      # Custom HTTP headers
-      #
-      RACK_AJAX_REWRITE = 'RACK_AJAX_REWRITE'
 
       def initialize(env)
         @env = env
@@ -74,9 +70,6 @@ module Rack
           @env['PATH_INFO'] = interpreted_to
           @env['QUERY_STRING'] = ''
         end
-
-        # Set a custom header indicating that the URL has been rewritten
-        @env[self.class::RACK_AJAX_REWRITE] = interpreted_to
 
         nil # fallthrough to app
       end

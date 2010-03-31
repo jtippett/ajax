@@ -1,4 +1,5 @@
 require 'rack-ajax/parser'
+require 'json'
 
 module Rack
   class Ajax
@@ -19,8 +20,18 @@ module Rack
     def call(env)
       return @app.call(env) unless ::Ajax.is_enabled?
 
+      # Parse the Ajax-Info header
+      if env["HTTP_AJAX_INFO"].nil?
+        env["Ajax-Info"] = {}
+      elsif env["HTTP_AJAX_INFO"].is_a?(String)
+        env["Ajax-Info"] = (JSON.parse(env['HTTP_AJAX_INFO']) rescue {})
+      end
+
       @parser = Parser.new(env)
       rack_response = @parser.instance_eval(&@decision_tree)
+
+      # Clear the value of session[:redirected_to]
+      env['rack.session']['redirected_to'] = env['rack.session'][:redirected_to] = nil
 
       # If we are testing our Rack::Ajax middleware, return
       # a Rack response now rather than falling through

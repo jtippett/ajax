@@ -3,6 +3,8 @@ module Ajax
     def self.included(klass)
       klass.class_eval do
         alias_method_chain :render, :ajax
+        alias_method_chain :redirect_to_full_url, :ajax
+
         append_after_filter :process_response_headers
       end
       klass.extend(ClassMethods)
@@ -44,11 +46,38 @@ module Ajax
 
     protected
 
-      # Make sure the response header is a string
+      # Redirect to hashed URLs unless the path is excepted.
+      #
+      # Store the URL that we are redirecting to in the session.
+      # If we then have a request for the root URL we know
+      # to render this URL into it.
+      #
+      # If redirecting back to the referer, use the referer
+      # in the Ajax-Info header because it includes the
+      # hashed part of the URL.  Otherwise the referer is
+      # always the root url.
+      def redirect_to_full_url_with_ajax(url, status)
+        raise DoubleRenderError if performed?
+
+        if url == request.headers["Referer"] && !request.headers['Ajax-Info'].nil?
+          url = request.headers['Ajax-Info']['referer']
+          Ajax.logger.debug("[ajax] using referer #{url} from Ajax-Info")
+        end
+
+        if !Ajax.exclude_path?(url) && Ajax.is_hashed_url?(url)
+          url = Ajax.hashed_url_from_traditional(url)
+          Ajax.logger.info("[ajax] rewrote redirect to #{url}")
+        end
+
+        session[:redirected_to] = url
+        redirect_to_full_url_without_ajax(url, status)
+      end
+
+      # Convert the Ajax-Info hash to JSON before the request is sent.
       def process_response_headers
         case response.headers['Ajax-Info']
-          when Hash, Array
-            response.headers['Ajax-Info'] = response.headers['Ajax-Info'].to_json
+        when Hash
+          response.headers['Ajax-Info'] = response.headers['Ajax-Info'].to_json
         end
       end
 
@@ -107,7 +136,7 @@ module Ajax
           ajax_layout
         end
       rescue ::ActionView::MissingTemplate
-        Rails.logger.debug("ajax layout missing! using #{default}")
+        Ajax.logger.info("[ajax] no layout found in layouts/ajax using #{default}")
         default
       end
   end
