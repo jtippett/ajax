@@ -50,11 +50,7 @@ var AjaxClass = function() {
         self.loading_icon.hide()
       },
       error: function(XMLHttpRequest, textStatus, errorThrown) {
-        // Handle error page
-        var responseText = $(XMLHttpRequest.responseText);
-        if ($(responseText).find('body').size() > 0) {
-          responseText = $(responseText).find('body').first();
-        }
+        var responseText = XMLHttpRequest.responseText;
         self.responseHandler(responseText, textStatus, XMLHttpRequest);
       }
     });
@@ -108,6 +104,19 @@ var AjaxClass = function() {
   self.responseHandler = function(responseText, textStatus, XMLHttpRequest) {
     var data = self.processResponseHeaders(XMLHttpRequest);
     var container = data.container === undefined ? self.default_container : $(data.container);
+
+    // Redirect?  Let the JS execute.  It will set the new window location.
+    if (responseText && responseText.match(/try\s{\swindow\.location\.href/)) { return true; }
+
+    // Full HTML document?  Extract the body
+    if (responseText.search(/<\s*body[^>]*>/) != -1) {
+      var start = responseText.search(/<\s*body[^>]*>/);
+      start += responseText.match(/<\s*body[^>]*>/)[0].length;
+      var end   = responseText.search(/<\s*\/\s*body\s*\>/);
+
+      console.log('Extracting body ['+start+'..'+end+'] chars');
+      responseText = responseText.substr(start, end - start);
+    }
 
     console.log('Using container ',container.selector);
     console.log('Set data ',data);
