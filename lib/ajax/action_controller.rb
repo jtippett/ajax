@@ -56,6 +56,9 @@ module Ajax
       # in the Ajax-Info header because it includes the
       # hashed part of the URL.  Otherwise the referer is
       # always the root url.
+      #
+      # For AJAX requests, respond with an AJAX-suitable
+      # redirect.
       def redirect_to_full_url_with_ajax(url, status)
         raise DoubleRenderError if performed?
 
@@ -64,13 +67,17 @@ module Ajax
           Ajax.logger.debug("[ajax] using referer #{url} from Ajax-Info")
         end
 
-        if !Ajax.exclude_path?(url) && Ajax.is_hashed_url?(url)
+        if !Ajax.exclude_path?(url) && !Ajax.is_hashed_url?(url)
           url = Ajax.hashed_url_from_traditional(url)
           Ajax.logger.info("[ajax] rewrote redirect to #{url}")
         end
 
         session[:redirected_to] = url
-        redirect_to_full_url_without_ajax(url, status)
+        if request.xhr?
+          render(:update) { |page| page.redirect_to(url) }
+        else
+          redirect_to_full_url_without_ajax(url, status)
+        end
       end
 
       # Convert the Ajax-Info hash to JSON before the request is sent.
