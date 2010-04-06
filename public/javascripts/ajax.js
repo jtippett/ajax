@@ -2,7 +2,7 @@ var AjaxClass = function() {
   var self = this;
 
   self.default_container = undefined;    // The default container
-  self.loading_icon = $('#loading-icon-small');
+  loading_icon = $('#loading-icon-small'); // this isn't working, for some reason
 
   /**
    * Initialize
@@ -37,7 +37,7 @@ var AjaxClass = function() {
   self.loadPage = function() {
     if (document.location.pathname != '/') { return false; }
 
-    self.loading_icon.show();
+    $('#loading-icon-small').show();
     $(document).bind('mousemove', self.updateImagePosition);
 
     jQuery.ajax({
@@ -47,7 +47,7 @@ var AjaxClass = function() {
       success: self.responseHandler,
       complete: function(XMLHttpRequest, responseText) {
         $(document).unbind('mousemove', self.updateImagePosition);
-        self.loading_icon.hide()
+        $('#loading-icon-small').hide()
       },
       error: function(XMLHttpRequest, textStatus, errorThrown) {
         var responseText = XMLHttpRequest.responseText;
