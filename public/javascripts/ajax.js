@@ -36,6 +36,10 @@ var AjaxClass = function() {
    */
   self.loadPage = function() {
     if (document.location.pathname != '/') { return false; }
+    if (typeof(already_loaded) != 'undefined' && already_loaded == true) { 
+      already_loaded = false;
+      return false; 
+    }
 
     $('#loading-icon-small').show();
     $(document).bind('mousemove', self.updateImagePosition);
