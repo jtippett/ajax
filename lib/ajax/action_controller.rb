@@ -61,8 +61,7 @@ module Ajax
       # redirect.
       def redirect_to_full_url_with_ajax(url, status)
         raise DoubleRenderError if performed?
-
-        if url == request.headers["Referer"] && !request.headers['Ajax-Info'].nil?
+        if url == request.headers["Referer"] && !request.headers['Ajax-Info'].blank?
           url = request.headers['Ajax-Info']['referer']
           Ajax.logger.debug("[ajax] using referer #{url} from Ajax-Info")
         end
