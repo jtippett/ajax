@@ -5,6 +5,8 @@ var AjaxClass = function() {
   self.loaded_by_framework = false;
   self.loading_icon = $('#loading-icon-small'); // this isn't working, for some reason
 
+
+
   /**
    * Initialize
    *
@@ -12,6 +14,10 @@ var AjaxClass = function() {
    *
    */
   self.init = function(options) {
+    
+    var image = '<img src="/images/loading-icon-small.gif" id="loading-icon-small" alt="Loading..." />'
+    $(image).hide().appendTo($('body'));
+    
     self.default_container = options.default_container;
 
     // Configure jQuery Address
