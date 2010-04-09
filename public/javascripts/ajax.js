@@ -2,7 +2,8 @@ var AjaxClass = function() {
   var self = this;
 
   self.default_container = undefined;    // The default container
-  loading_icon = $('#loading-icon-small'); // this isn't working, for some reason
+  self.loaded_by_framework = false;
+  self.loading_icon = $('#loading-icon-small'); // this isn't working, for some reason
 
   /**
    * Initialize
@@ -36,8 +37,9 @@ var AjaxClass = function() {
    */
   self.loadPage = function() {
     if (document.location.pathname != '/') { return false; }
-    if (typeof(already_loaded) != 'undefined' && already_loaded == true) { 
-      already_loaded = false;
+    
+    if (typeof(self.loaded_by_framework) == 'undefined' || self.loaded_by_framework != true) { 
+      self.loaded_by_framework = true;
       return false; 
     }
 
