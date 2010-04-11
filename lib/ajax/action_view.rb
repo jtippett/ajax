@@ -3,9 +3,8 @@ module Ajax
     def self.included(klass)
       klass.class_eval do
         alias_method_chain :link_to, :ajax
-
-        include Helpers
-      end
+      end if Ajax.is_enabled?
+      klass.send(:include, Helpers)
     end
 
     module Helpers

@@ -1,6 +1,5 @@
 require 'ajax/url_helpers'
 require 'ajax/rails_helpers'
-require 'ajax/ui_helpers'
 
 module Ajax
   # Set to the Rails logger by default, assign nil to turn off logging
@@ -10,20 +9,19 @@ module Ajax
 
   extend UrlHelpers
   extend RailsHelpers
-  extend UiHelpers
 
   # Dummy a logger if logging is turned off of if Ajax isn't enabled
   def self.logger
     if !@logger.nil? && is_enabled?
       @logger
-    elsif @logger.nil?
+    else
       @logger = Class.new { def method_missing(*args); end; }.new
     end
   end
 
   # Return a boolean indicating whether the plugin is currently enabled
   def self.is_enabled?
-    @enabled ||= true
+    !!@enabled
   end
 
   # Set to false to prevent disable this plugin completely
@@ -45,16 +43,6 @@ module Ajax
   # HTTP request methods.
   def self.mocked=(value)
     @mocked = !!value
-  end
-
-  # If you would prefer not to include the Ajax module in ActionController::Base
-  # you can include it in only those controllers you want with:
-  #
-  #   include Ajax
-  #
-  # Don't forget to disable <tt>init.rb</tt> in this case.
-  def self.included(klass)
-    klass.send(:include, Ajax::ActionController)
   end
 
   # Installs Ajax for Rails.

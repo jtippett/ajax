@@ -1,12 +1,12 @@
 module Ajax
   module ActionController
-    def self.included(klass)
+    def self.included(klass)      
       klass.class_eval do
         alias_method_chain :render, :ajax
         alias_method_chain :redirect_to_full_url, :ajax
 
         append_after_filter :process_response_headers
-      end
+      end if Ajax.is_enabled?
       klass.extend(ClassMethods)
     end
 

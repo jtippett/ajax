@@ -6,7 +6,12 @@ module Ajax
         Ajax.enabled = true
       end
 
+      def disable_ajax
+        Ajax.enabled = false
+      end
+      
       def mock_ajax
+        integrate_ajax
         Ajax.mocked = true
       end
     end
