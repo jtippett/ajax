@@ -130,7 +130,12 @@ var AjaxClass = function() {
 
     console.log('Using container ',container.selector);
     console.log('Set data ',data);
-    container.html(responseText).data('ajax-info', data);
+
+    container.data('ajax-info', data)
+    element = container.selector.replace(/#/,'')
+    safe_div = document.getElementById(element);
+    safe_div.innerHTML = responseText;
+//    container.text(responseText); -- crashes jQuery if the body is not extracted properly
 
     if (data.title !== undefined) {
       console.log('Using page title '+data.title);
