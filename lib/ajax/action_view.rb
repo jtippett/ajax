@@ -2,7 +2,7 @@ module Ajax
   module ActionView
     def self.included(klass)
       klass.class_eval do
-        alias_method_chain :link_to, :ajax
+        alias_method_chain :link_to, :ajax if method_defined?(:link_to)
       end if Ajax.is_enabled?
       klass.send(:include, Helpers)
     end
