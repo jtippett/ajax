@@ -19,12 +19,18 @@ module Ajax
     end
   end
 
-  # Return a boolean indicating whether the plugin is currently enabled
+  # Return a boolean indicating whether the plugin is enabled.
+  #
+  # Enabled by default.
   def self.is_enabled?
-    !!@enabled
+    @enabled.nil? ? true : !!@enabled
   end
 
-  # Set to false to prevent disable this plugin completely
+  # Set to false to disable this plugin completely.
+  #
+  # ActionController and ActionView helpers are still mixed in but
+  # they are effectively disabled, which means your code will still
+  # run.
   def self.enabled=(value)
     @enabled = !!value
   end

@@ -1,11 +1,9 @@
 var AjaxClass = function() {
   var self = this;
 
-  self.default_container = undefined;    // The default container
+  self.default_container = undefined;
   self.loaded_by_framework = false;
-  self.loading_icon = $('#loading-icon-small'); // this isn't working, for some reason
-
-
+  self.loading_icon = $('#loading-icon-small');
 
   /**
    * Initialize
@@ -49,8 +47,8 @@ var AjaxClass = function() {
       return false; 
     }
 
-    $('#loading-icon-small').show();
     $(document).bind('mousemove', self.updateImagePosition);
+    $('#loading-icon-small').show();
 
     jQuery.ajax({
       url: $.address.value().replace(/\/\//, '/'),
@@ -174,7 +172,7 @@ var AjaxClass = function() {
    * Update the position of the loading icon.
    */
   self.updateImagePosition = function(e) {
-    //console.log((e.pageY + 10)+'px');
+    //console.log(e.pageY);
     $('#loading-icon-small').css({
       layer: 100,
       position: 'absolute',
