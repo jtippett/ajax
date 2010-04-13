@@ -93,7 +93,7 @@ module Ajax
       #
       def render_with_ajax(options = nil, extra_options = {}, &block) #:nodoc:
         original_args = [options, extra_options]
-
+        
         if Ajax.is_enabled? && request.xhr?
 
           # Options processing taken from ActionController::Base#render
@@ -135,10 +135,12 @@ module Ajax
       # If no ajax_layout is set, look for the default layout in <tt>layouts/ajax</tt>.
       # If the layout cannot be found, use the default.
       #
+      # FIXME: Use hard-coded html layout extension because <tt>default_template_format</tt>
+      # is sometimes :js which means the layout isn't found.
       def layout_for_ajax(default) #:nodoc:
         ajax_layout = self.class.read_inheritable_attribute(:ajax_layout)
         if ajax_layout.nil? || !(ajax_layout =~ /^layouts\/ajax/)
-          find_layout("layouts/ajax/#{default.sub(/layouts(\/)?/, '')}", default_template_format) unless default.nil?
+          find_layout("layouts/ajax/#{default.sub(/layouts(\/)?/, '')}", 'html') unless default.nil?
         else
           ajax_layout
         end

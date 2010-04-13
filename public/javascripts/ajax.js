@@ -69,7 +69,7 @@ var AjaxClass = function() {
   };
 
   /**
-   * responseHandler
+   * setRequestHeaders
    *
    * Set the AJAX_INFO request header.  This includes all the data
    * defined on the main (or receiving) container, plus some other
