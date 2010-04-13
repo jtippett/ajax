@@ -1,4 +1,6 @@
 :javascript
   $(function() {
-    Ajax.loaded_by_framework = true;
+    if (window.ajax !== undefined) {
+      window.ajax.loaded_by_framework = true;
+    }
   });
