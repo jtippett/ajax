@@ -1,10 +1,50 @@
+jQuery.extend({
+  /**
+   * betterGetScript
+   *
+   * Replace the normal jQuery getScript function with one that supports
+   * debugging and which references the script files as external resources
+   * rather than inline.
+   * @see http://stackoverflow.com/questions/690781/debugging-scripts-added-via-jquery-getscript-function
+   */  
+  betterGetScript: function(url, callback) {
+    var head = document.getElementsByTagName("head")[0];
+    var script = document.createElement("script");
+    script.src = url;
+
+    // Handle Script loading
+    {
+       var done = false;
+
+       // Attach handlers for all browsers
+       script.onload = script.onreadystatechange = function(){
+          if ( !done && (!this.readyState ||
+                this.readyState == "loaded" || this.readyState == "complete") ) {
+             done = true;
+             if (callback)
+                callback();
+
+             // Handle memory leak in IE
+             script.onload = script.onreadystatechange = null;
+          }
+       };
+    }
+
+    head.appendChild(script);
+
+    // We handle everything using the script element injection
+    return undefined;
+  }
+});
+
 var AjaxClass = function() {
   var self = this;
 
   self.default_container = undefined;
   self.loaded_by_framework = false;
   self.loading_icon = $('#loading-icon-small');
-
+  self.assets = undefined;
+  
   /**
    * Initialize
    *
@@ -24,6 +64,17 @@ var AjaxClass = function() {
 
     // Bind a live event to all ajax-enabled links
     $('a[data-deep-link]').click(self.linkClicked).live('click', self.linkClicked);
+    
+    // Initialize the list of javascript assets
+    if (self.assets === undefined) {
+      self.assets = [];
+      $(document).find('script[type=text/javascript][src!=]').each(function() {
+        var script = $(this);
+        if (script.attr('src').match(/^\//)) {
+          self.assets.push(script.attr('src').replace(/\?\d+/, ''));
+        }
+      });
+    }
   };
 
   /**
@@ -132,10 +183,7 @@ var AjaxClass = function() {
     console.log('Set data ',data);
 
     container.data('ajax-info', data)
-    element = container.selector.replace(/#/,'')
-    safe_div = document.getElementById(element);
-    safe_div.innerHTML = responseText;
-//    container.text(responseText); -- crashes jQuery if the body is not extracted properly
+    container.html(responseText);
 
     if (data.title !== undefined) {
       console.log('Using page title '+data.title);
@@ -145,7 +193,27 @@ var AjaxClass = function() {
       console.log('Activating tab '+data.tab);
       $(data.tab).trigger('activate');
     }
-
+    
+    // Load assets
+    if (data.assets !== undefined && data.assets.javascript !== undefined) {
+      jQuery.each(data.assets.javascript, function(idx, script) {
+        for (var i=0; i < self.assets.length; i++) {
+          if (self.assets[i] == script) {
+            console.log('[ajax] skipping asset', script);
+            return true;
+          }
+        }
+        console.log('[ajax] loading asset', script);
+        jQuery.betterGetScript(script);
+        self.assets.push(script);
+      });
+    }
+    
+    // Call callbacks
+    if (data.callback !== undefined) {
+      jQuery.globalEval(data.callback);
+    }
+        
     // Set cookies
     var cookie = XMLHttpRequest.getResponseHeader('Set-Cookie');
     if (cookie !== null) {
