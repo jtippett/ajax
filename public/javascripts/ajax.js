@@ -137,14 +137,14 @@ var Ajax = function(options) {
     
     // Configure jQuery Address
     $.address.history(true);
-    $.address.change = self.loadPage;
-    
+    $.address.change = self.addressChanged;
+
     // Insert loading image
     var image = '<img src="/images/loading-icon-small.gif" id="loading-icon-small" alt="Loading..." />'
     $(image).hide().appendTo($('body'));
     
     // Bind a live event to all ajax-enabled links
-    $('a[data-deep-link]').click(self.linkClicked).live('click', self.linkClicked);
+    $('a[data-deep-link]').live('click', self.linkClicked);
     
     // Initialize the list of javascript assets
     if (self.javascripts === undefined) {
@@ -183,7 +183,24 @@ var Ajax = function(options) {
       });
     }
   };
+  
+  /**
+   * jQuery Address callback triggered when the address changes.
+   */
+  self.addressChanged = function() {
+    if (document.location.pathname != '/') { return false; }
+
+    if (typeof(self.loaded_by_framework) == 'undefined' || self.loaded_by_framework != true) { 
+      self.loaded_by_framework = true;
+      return false; 
+    }    
     
+    self.loadPage({ 
+      url: $.address.value().replace(/\/\//, '/')
+    });
+    return true;
+  };
+  
   /**
    * loadPage
    *
@@ -199,26 +216,18 @@ var Ajax = function(options) {
    *
    *  Cookies in the response are automatically set on the document.cookie.
    */
-  self.loadPage = function() {
-    if (document.location.pathname != '/') { return false; }
-    
-    // When jQuery address initializes it automatically calls our
-    // <tt>loadPage</tt> callback to load the inner page content.
-    //
-    // After a redirect we render the page in one, bypassing the
-    // usual two-step process.  In this case <tt>loaded_by_framework</tt>
-    // is false, and we know to ignore the initial <tt>loadPage</tt> request.
-    if (self.loaded_by_framework === undefined || self.loaded_by_framework != true) { 
-      self.loaded_by_framework = true;
-      return false; 
+  self.loadPage = function(options) {
+    if (!self.enabled) { 
+      document.location = options.url;
+      return true;
     }
-
+    
     $(document).bind('mousemove', self.updateImagePosition);
     $('#loading-icon-small').show();
 
     jQuery.ajax({
-      url: $.address.value().replace(/\/\//, '/'),
-      method: 'GET',
+      url: options.url,
+      method: options.method || 'GET',
       beforeSend: self.setRequestHeaders,
       success: self.responseHandler,
       complete: function(XMLHttpRequest, responseText) {
@@ -230,8 +239,6 @@ var Ajax = function(options) {
         self.responseHandler(responseText, textStatus, XMLHttpRequest);
       }
     });
-
-    return true;
   };
 
   /**
