@@ -348,16 +348,6 @@ var Ajax = function(options) {
     }
     
     // Load assets
-    if (data.assets !== undefined && data.assets.javascripts !== undefined) {
-      jQuery.each(jQuery.makeArray(data.assets.javascripts), function(idx, url) {
-        if (self.javascripts.loadedAsset(url)) {
-          console.log('[ajax] skipping js', url);
-          return true;
-        } else {
-          self.javascripts.loadAsset(url);
-        }
-      });
-    }
     if (data.assets !== undefined && data.assets.stylesheets !== undefined) {
       jQuery.each(jQuery.makeArray(data.assets.stylesheets), function(idx, url) {
         if (self.stylesheets.loadedAsset(url)) {
@@ -365,6 +355,16 @@ var Ajax = function(options) {
           return true;
         } else {
           self.stylesheets.loadAsset(url);
+        }
+      });
+    }
+    if (data.assets !== undefined && data.assets.javascripts !== undefined) {
+      jQuery.each(jQuery.makeArray(data.assets.javascripts), function(idx, url) {
+        if (self.javascripts.loadedAsset(url)) {
+          console.log('[ajax] skipping js', url);
+          return true;
+        } else {
+          self.javascripts.loadAsset(url);
         }
       });
     }
