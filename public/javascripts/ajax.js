@@ -15,7 +15,12 @@
  *      stylesheets []
  *
  */
-var AjaxAssets = function(array) {
+var AjaxAssets = function(array, type) {
+  var DATA_URI_START = "<!--[if (!IE)|(gte IE 8)]><!-->";
+  var DATA_URI_END   = "<!--<![endif]-->";
+  var MHTML_START    = "<!--[if lte IE 7]>";
+  var MHTML_END      = "<![endif]-->";
+
   return jQuery.extend(array, {
     /**
      * Add an asset, but don't load it.
@@ -30,7 +35,7 @@ var AjaxAssets = function(array) {
      * query string.
      */
     loadAsset: function(path) {
-      console.log('[ajax] loading asset', path);
+      console.log('[ajax] loading', type, path);
       this.push(this.sanitizePath(path));
       this.appendScriptTag(path);
     },
@@ -64,27 +69,38 @@ var AjaxAssets = function(array) {
      * @see http://stackoverflow.com/questions/690781/debugging-scripts-added-via-jquery-getscript-function
      */  
     appendScriptTag: function(url, callback) {
-      var head = document.getElementsByTagName("head")[0];
-      var script = document.createElement("script");
-      script.src = url;
+      if (type == 'js') {
+        var head = document.getElementsByTagName("head")[0];
+        var script = document.createElement("script");
+        script.src = url;
+        script.type = 'text/javascript'
       
-      { // Handle Script loading
-         var done = false;
+        { // Handle Script loading
+           var done = false;
 
-         // Attach handlers for all browsers
-         script.onload = script.onreadystatechange = function(){
-            if ( !done && (!this.readyState ||
-                  this.readyState == "loaded" || this.readyState == "complete") ) {
-               done = true;
-               if (callback)
-                  callback();
+           // Attach handlers for all browsers
+           script.onload = script.onreadystatechange = function(){
+              if ( !done && (!this.readyState ||
+                    this.readyState == "loaded" || this.readyState == "complete") ) {
+                 done = true;
+                 if (callback)
+                    callback();
 
-               // Handle memory leak in IE
-               script.onload = script.onreadystatechange = null;
-            }
-         };
+                 // Handle memory leak in IE
+                 script.onload = script.onreadystatechange = null;
+              }
+           };
+        }
+        head.appendChild(script);
+      } else if (type == 'css') {
+        if (url.match(/datauri/)) {
+          $(DATA_URI_START + '<link type="text/css" rel="stylesheet" href="'+ url +'">' + DATA_URI_END).appendTo('head');
+        } else if (url.match(/mhtml/)) {
+          $(MHTML_START + '<link type="text/css" rel="stylesheet" href="'+ url +'">' + MHTML_END).appendTo('head');
+        } else {
+          $('<link type="text/css" rel="stylesheet" href="'+ url +'">').appendTo('head');
+        }
       }
-      head.appendChild(script);
       return undefined;
     }  
   });
@@ -116,8 +132,13 @@ var Ajax = function(options) {
   self.loaded_by_framework = false;
   self.loading_icon = $('#loading-icon-small');
   self.javascripts = undefined;
+  self.stylesheets = new AjaxAssets([], 'css');
   self.callbacks = [];
   
+  // For initial position of the loading icon.  Often the mouse does not
+  // move so position it by the link that was clicked.
+  self.last_click_coords = undefined;
+
   // Parse options
   self.options = options;  
   self.default_container = options.default_container;
@@ -148,7 +169,7 @@ var Ajax = function(options) {
     
     // Initialize the list of javascript assets
     if (self.javascripts === undefined) {
-      self.javascripts = new AjaxAssets([]);
+      self.javascripts = new AjaxAssets([], 'js');
       
       $(document).find('script[type=text/javascript][src!=]').each(function() {
         var script = $(this);
@@ -223,6 +244,9 @@ var Ajax = function(options) {
     }
     
     $(document).bind('mousemove', self.updateImagePosition);
+    if (self.last_click_coords !== undefined) {
+      self.updateImagePosition(self.last_click_coords);
+    }
     $('#loading-icon-small').show();
 
     jQuery.ajax({
@@ -272,6 +296,7 @@ var Ajax = function(options) {
       url.replace(/\/\//, '/');
       document.location = url;
     } else {
+      self.last_click_coords = { pageX: event.pageX, pageY: event.pageY };
       $.address.value($(this).attr('data-deep-link'));
     }
     return false;
@@ -324,16 +349,26 @@ var Ajax = function(options) {
     
     // Load assets
     if (data.assets !== undefined && data.assets.javascripts !== undefined) {
-      jQuery.each(jQuery.makeArray(data.assets.javascripts), function(idx, script) {
-        if (self.javascripts.loadedAsset(script)) {
-          console.log('[ajax] skipping asset', script);
+      jQuery.each(jQuery.makeArray(data.assets.javascripts), function(idx, url) {
+        if (self.javascripts.loadedAsset(url)) {
+          console.log('[ajax] skipping js', url);
           return true;
         } else {
-          self.javascripts.loadAsset(script);
+          self.javascripts.loadAsset(url);
         }
       });
     }
-    
+    if (data.assets !== undefined && data.assets.stylesheets !== undefined) {
+      jQuery.each(jQuery.makeArray(data.assets.stylesheets), function(idx, url) {
+        if (self.stylesheets.loadedAsset(url)) {
+          console.log('[ajax] skipping css', url);
+          return true;
+        } else {
+          self.stylesheets.loadAsset(url);
+        }
+      });
+    }
+
     // Callback specified in header
     if (data.callback !== undefined) {
       self.executeCallback(data.callback);    
@@ -378,12 +413,11 @@ var Ajax = function(options) {
    * Update the position of the loading icon.
    */
   self.updateImagePosition = function(e) {
-    //console.log(e.pageY);
     $('#loading-icon-small').css({
       layer: 100,
       position: 'absolute',
-      top: e.pageY,
-      left: e.pageX
+      top: e.pageY + 14,
+      left: e.pageX + 14
     });
   };
 

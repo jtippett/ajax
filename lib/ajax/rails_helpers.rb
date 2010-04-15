@@ -1,10 +1,30 @@
 module Ajax
   module RailsHelpers
+    # Recursive merge values
+    DEEP_MERGE = lambda do |key, v1, v2|
+      if v1.is_a?(Hash) && v2.is_a?(Hash)
+        v1.merge(v2, &DEEP_MERGE)
+      elsif v1.is_a?(Array) && v2.is_a?(Array)
+        v1.concat(v2)
+      else
+        [v1, v2].compact.first
+      end
+    end
+
     def set_header(object, key, value)
       headers = object.is_a?(::ActionController::Response) ? object.headers : object
       unless headers["Ajax-Info"].is_a?(Hash)
         headers["Ajax-Info"] = {}
       end
+
+      # Deep merge asset hashes
+      if headers["Ajax-Info"].has_key?(key.to_s) &&
+          key.to_s == 'assets' &&
+          value.is_a?(Hash) &&
+          headers["Ajax-Info"][key.to_s].is_a?(Hash)
+        value = headers["Ajax-Info"][key.to_s].merge(value, &DEEP_MERGE)
+      end
+
       headers["Ajax-Info"][key.to_s] = value
     end
 
