@@ -14,6 +14,11 @@ module Ajax
         integrate_ajax
         Ajax.mocked = true
       end
+      
+      def unmock_ajax
+        disable_ajax
+        Ajax.mocked = false
+      end      
     end
   end
 end
