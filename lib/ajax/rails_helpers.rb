@@ -11,20 +11,27 @@ module Ajax
       end
     end
 
+    # Hash and/or Array values are merged so you can set multiple values
     def set_header(object, key, value)
       headers = object.is_a?(::ActionController::Response) ? object.headers : object
       unless headers["Ajax-Info"].is_a?(Hash)
         headers["Ajax-Info"] = {}
       end
 
-      # Deep merge asset hashes
+      # Deep merge hashes
       if headers["Ajax-Info"].has_key?(key.to_s) &&
-          key.to_s == 'assets' &&
           value.is_a?(Hash) &&
           headers["Ajax-Info"][key.to_s].is_a?(Hash)
         value = headers["Ajax-Info"][key.to_s].merge(value, &DEEP_MERGE)
       end
 
+      # Concat arrays
+      if headers["Ajax-Info"].has_key?(key.to_s) &&
+          value.is_a?(Array) &&
+          headers["Ajax-Info"][key.to_s].is_a?(Array)
+        value = headers["Ajax-Info"][key.to_s].concat(value)
+      end
+      
       headers["Ajax-Info"][key.to_s] = value
     end
 

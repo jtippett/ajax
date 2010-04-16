@@ -18,10 +18,16 @@ describe 'Ajax::RailsHelpers' do
       @headers['Ajax-Info']['assets'].should == { :key => ['value'] }
     end
 
-    it "should merge assets" do
+    it "should merge hashes" do
       set_header @headers, :assets, { :key => ['value1'] }
       set_header @headers, :assets, { :key => ['value2'] }
       @headers['Ajax-Info']['assets'].should == { :key => ['value1', 'value2'] }
     end
+    
+    it "should concat arrays" do
+      set_header @headers, :callbacks, ['one']
+      set_header @headers, :callbacks, ['two']
+      @headers['Ajax-Info']['callbacks'].should == ['one', 'two']
+    end    
   end
 end

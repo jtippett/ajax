@@ -246,6 +246,8 @@ var Ajax = function(options) {
     $(document).bind('mousemove', self.updateImagePosition);
     if (self.last_click_coords !== undefined) {
       self.updateImagePosition(self.last_click_coords);
+    } else {
+      $('#loading-icon-small').center();
     }
     $('#loading-icon-small').show();
 
@@ -369,9 +371,11 @@ var Ajax = function(options) {
       });
     }
 
-    // Callback specified in header
-    if (data.callback !== undefined) {
-      self.executeCallback(data.callback);    
+    // Callbacks specified in header
+    if (data.callbacks !== undefined) {
+      jQuery.each(jQuery.makeArray(data.callbacks), function(idx, callback) {
+        self.executeCallback(callback);
+      });
     }
     
     // Registered callbacks
@@ -426,7 +430,8 @@ var Ajax = function(options) {
    * addCallback
    *
    * Register a callback to be executed in the global scope
-   * once all Ajax assets have been loaded.
+   * once all Ajax assets have been loaded.  Callbacks are
+   * appended to the queue.
    *
    * If the plugin is disabled, callbacks are executed immediately
    * on DOM ready.
@@ -434,12 +439,28 @@ var Ajax = function(options) {
   self.addCallback = function(callback) {
     if (self.enabled) {
       self.callbacks.push(callback);
-      console.log('[ajax] registered callback');
+      console.log('[ajax] appending callback', callback);
     } else {
       self.executeCallback(callback, true);
     }
   };
 
+  /**
+   * prependCallback
+   *
+   * Add a callback to the start of the queue.
+   *
+   * @see addCallback
+   */
+  self.prependCallback = function(callback) {
+    if (self.enabled) {
+      self.callbacks.unshift(callback);
+      console.log('[ajax] prepending callback', callback);
+    } else {
+      self.executeCallback(callback, true);
+    }
+  };
+  
   /**
    * Execute a callback given as a string or function reference.
    *
