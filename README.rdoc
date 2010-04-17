@@ -22,13 +22,25 @@ Where before you would have seen something like <tt>http://example.com/the-beatl
 
 <tt>Ajax</tt> comprises Rack middleware, Rails integrations and some JavaScript libraries to handle everything from redirecting and rewriting incoming requests, to managing the response headers and content, to handling the browser URL, JavaScript callbacks and client-side events.
 
+Browsers do not send the hashed part of the the URL with page requests, so to an AJAX-ed application, all requests look like they are for root (<code>/</code>).
+
+In order to load the correct page we must first render a framework page with accompanying JavaScript.  The JS examines the URL and then issues another request to the server for the hashed part (which may still be <code>/</code>).
+
+=== An example user interaction:
+
+1. User pastes http://example.com/#/beyonce/albums into a browser.
+2. Server receives request for http://example.com/ and renders the framework page.
+4. AJAX request for http://example.com/beyonce/albums is initiated by client-side JavaScript, and received by the server.
+5. Server renders http://example.com/beyonce/albums.
+6. Response headers are processed and the response inserted into the page container.
+
 === How do I use it?
 
 Configuration is achieved via a Rails initializer file.  Rails helpers are provided to manage the response and there are Spec helpers for testing your Rack middleware and your Rails integration.
 
 <tt>Ajax</tt> handles these common problems:
 
-* SEO/Crawlability
+* SEO/Crawlability/Google Analytics support
 * Browser History
 * Bookmarkability / Deep-linking
 * Redirects
@@ -72,9 +84,7 @@ The following JavaScript libraries are required and included in the plugin:
 
 Output of the install:
 
-* JavaScript files are copied to your <tt>public/javascripts/</tt> directory.
-* A loading image is copied to <tt>public/images/</tt>.
-* An 
+  TODO
 
 = Documentation
 
@@ -135,5 +145,11 @@ More docs to come...
 == Contributions
 
 Contributions are welcome.  Please fork the project and send me a pull request with your changes and Spec tests.
+
+== Useful Resources
+
+* AjaxPatters[link:http://ajaxpatterns.org/Unique_URLs] useful discussion of techniques for maintaining state using JavaScript to poll for changes to <tt>window.location.hash</tt>.
+* {link jQuery Address}[http://www.asual.com/jquery/address/] JavaScript library for managing the URL.
+* SWFAddress[link: http://www.asual.com/swfaddress/] deep linking solution for Flash.
 
 Copyright (c) 2010 Karl Varga, released under the MIT license
