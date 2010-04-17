@@ -1,10 +1,139 @@
-== Ajax
+= Ajax
 
-A framework for converting a traditional Rails site to completely use AJAX.
+<b>A Ruby on Rails plugin to augment a traditional Rails application with a completely AJAX frontend, while transparently handling issues important to both the enterprise and end users, such as testing, SEO and browser history.</b>
 
+The <tt>Ajax</tt> philosophy is that you should not have to develop for AJAX:  Your code shouldn't change; your tests shouldn't change; and the way Google sees your site shouldn't change.  (Coming soon, this {link AJAX site crawling spec }[http://code.google.com/web/ajaxcrawling/docs/getting-started.html] may obviate that.)
+
+The beauty of <tt>Ajax</tt> is that your Rails application only ever sees traditional requests, so it does not have to be "Ajax aware".
+
+<tt>Ajax</tt> is being used live in production on altnet.com[link:http://altnet.com], if you would like to try it out (as of May 1st 2010 or thereabouts).
+
+== Intro
+
+<tt>Ajax</tt> requires very little configuration and will work out of the box.  With a few lines of code you can start enjoying a completely AJAX site.
+
+What do I mean by "completely AJAX"?  Everyone uses AJAX.  The difference is that when you go completely AJAX it means that the main page is only loaded once.  Every link now loads content via AJAX.  But unless we change the URL, we will have no history, because that is how browsers determine when your history changes.  The only way to change the URL without causing the browser to make a new request, is to modify the named anchor, or "hashed" part of the URL.  
+
+So now your traditional links auto-magically load content via AJAX into a page container and update the browser URL with the new URL, creating history and enabling bookmarkability.
+
+Where before you would have seen something like <tt>http://example.com/the-beatles/history</tt>, now you would see <tt>http://example.com/#/the-beatles/history</tt>.  Notice the <tt>#/</tt>?
+
+=== How does it work?
+
+<tt>Ajax</tt> comprises Rack middleware, Rails integrations and some JavaScript libraries to handle everything from redirecting and rewriting incoming requests, to managing the response headers and content, to handling the browser URL, JavaScript callbacks and client-side events.
+
+=== How do I use it?
+
+Configuration is achieved via a Rails initializer file.  Rails helpers are provided to manage the response and there are Spec helpers for testing your Rack middleware and your Rails integration.
+
+<tt>Ajax</tt> handles these common problems:
+
+* SEO/Crawlability
+* Browser History
+* Bookmarkability / Deep-linking
+* Redirects
+* Cookies
+* Lazy-loaded Assets
+* Activating Tabs
+* Request Rewriting & Redirecting
+
+== Requirements
+
+You must be running <b>jQuery 1.4.2</t> to use this plugin.  Sorry, Prototype users.
+
+== Compatibility
+
+=== Ruby and Rails:
+
+  * Rails 2.3.4 running Ruby 1.8.7 and Ruby 1.9
+  * Rails 2.3.5 running Ruby 1.8.7 and Ruby 1.9
+  
+=== Browsers:
+
+See {link jQuery address supported browsers}[http://www.asual.com/jquery/address/docs/]
+
+  * Internet Explorer 6.0+
+  * Mozilla Firefox 1.0+
+  * Safari 1.3+
+  * Opera 9.5+
+  * Chrome 1.0+
+  * Camino 1.0+
+ 
 == Install
 
-Requires jQuery Center plugin from http://andreaslagerkvist.com/aFramework/Modules/Base/jquery.center.js
-Requires jQuery Address plugin v1.1 from http://www.asual.com/jquery/address/
+Install as a Rails plugin:
+
+  ./script/plugin install http://github.com/kjvarga/ajax.git
+  
+The following JavaScript libraries are required and included in the plugin:
+
+* {link jQuery Address 1.2RC}[http://www.asual.com/jquery/address/]
+* jQuery JSON 2.2
+
+Output of the install:
+
+* JavaScript files are copied to your <tt>public/javascripts/</tt> directory.
+* A loading image is copied to <tt>public/images/</tt>.
+* An 
+
+= Documentation
+
+== Configuration
+
+It is important to be able to disable the plugin when you don't want it interfering, like when you are testing.  You will also want to ensure that your site's JavaScript still works when the plugin is disabled.
+
+To disable the plugin in your environment file:
+  
+  # config/environments/test.rb
+  Ajax.enabled = false
+
+If you need to you can check the state of the plugin with:
+
+  Ajax.is_enabled?
+
+The bulk of the configuration occurs in <tt>config/initializers/ajax.rb</tt>.  This is where we insert the Rack middleware and indicate which links to except from the request processing.
+
+== Link Handling
+
+All links which are rendered using the <tt>link_to</tt> (or any other url) helper method automatically include a <tt>data-deep-link</tt> attribute containing the path from the link's HREF.
+
+The Ajax JavaScript class listens for clicks on any link with a <tt>data-deep-link</tt> attribute and loads the link's content using AJAX.
+
+Should you need to, you can set this attribute on a link by passing in HTML options to <tt>link_to</tt>:
+
+  link_to odd_url, {}, { :data-deep-link => '/even/odder/url' }
+ 
+=== Excepted Links
+
+Excepted links bypass Ajax request and link handling.  I call these traditional links.
+
+Links can be excepted by passing in strings or regular expressions to <code>Ajax.exclude_paths()</code>.  Only pass the path and not the full URL.  The path will be modified to match against other paths as well as against full URLs:
+
+  Ajax.exclude_paths %w[ /login /logout /signup /altnet-pro /my-account/edit /user-session/new ]
+  Ajax.exclude_paths [%r[\/my-account\/.*]]
+  
+Typically, we except pages that require HTTPS, like signup forms, because including secure forms on an insecure page often triggers a browser warning.
+
+Excepted links when rendered do not contain the <tt>data-deep-link</tt> attribute if they are rendered with the <tt>link_to</tt> (or any other url) helper method.
+
+== Request Handling
+
+Ajax uses a custom HTTP header <tt>Ajax-Info</tt> to pass JSON back and forth between the client and server.  The client sends information about the state of the container, and the server sends new information back.
+
+There are <tt>ActionView</tt> and <tt>ActionController</tt> helpers to make it easy to set headers in the response.
+
+*<tt>Ajax-Info</tt> headers with special meaning:*
+
+[title]      Set the page title.
+[tab]        jQuery selector, triggers the <tt>activate</tt> event on matched element(s).
+[container]  The container to receive the content, or <tt>default_container</tt>.
+[assets]     JavaScript and CSS assets to load.
+[callbacks]  Callbacks to execute after assets have finished loaded.
+
+More docs to come...
+
+== Contributions
+
+Contributions are welcome.  Please fork the project and send me a pull request with your changes and Spec tests.
 
 Copyright (c) 2010 Karl Varga, released under the MIT license

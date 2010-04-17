@@ -119,10 +119,14 @@ var AjaxAssets = function(array, type) {
  *
  * Callbacks:
  *
- * Callbacks can be specified using Ajax-Info{ callback: 'javascript to eval' },
- * or by adding callbacks to your Ajax instance e.g.
+ * Callbacks can be specified using Ajax-Info{ callbacks: 'javascript to eval' },
+ * or by adding callbacks directly to the Ajax instance:
  * 
- *    window.ajax.addCallback(function() { doSomething(args); });
+ *    window.ajax.onLoad(function() { doSomething(args); });
+ *
+ * Order of execution:
+ *
+ *
  */ 
 var Ajax = function(options) {
   var self = this;
@@ -243,13 +247,7 @@ var Ajax = function(options) {
       return true;
     }
     
-    $(document).bind('mousemove', self.updateImagePosition);
-    if (self.last_click_coords !== undefined) {
-      self.updateImagePosition(self.last_click_coords);
-    } else {
-      $('#loading-icon-small').center();
-    }
-    $('#loading-icon-small').show();
+    self.showLoadingImage();
 
     jQuery.ajax({
       url: options.url,
@@ -318,7 +316,9 @@ var Ajax = function(options) {
     // Redirect?  Let the JS execute.  It will set the new window location.
     if (responseText && responseText.match(/try\s{\swindow\.location\.href/)) { return true; }
 
-    // Full HTML document?  Extract the body
+    /**
+     * Extract the body
+    */
     if (responseText.search(/<\s*body[^>]*>/) != -1) {
       var start = responseText.search(/<\s*body[^>]*>/);
       start += responseText.match(/<\s*body[^>]*>/)[0].length;
@@ -327,12 +327,6 @@ var Ajax = function(options) {
       console.log('Extracting body ['+start+'..'+end+'] chars');
       responseText = responseText.substr(start, end - start);
     }
-
-    // Insert the response into the container
-    console.log('Using container ',container.selector);
-    console.log('Set data ',data);
-    container.data('ajax-info', data)
-    container.html(responseText);
 
     // Handle special header instructions
     //  title    - set page title
@@ -349,7 +343,9 @@ var Ajax = function(options) {
       $(data.tab).trigger('activate');
     }
     
-    // Load assets
+    /**
+     * Load assets
+    */
     if (data.assets !== undefined && data.assets.stylesheets !== undefined) {
       jQuery.each(jQuery.makeArray(data.assets.stylesheets), function(idx, url) {
         if (self.stylesheets.loadedAsset(url)) {
@@ -360,6 +356,7 @@ var Ajax = function(options) {
         }
       });
     }
+    
     if (data.assets !== undefined && data.assets.javascripts !== undefined) {
       jQuery.each(jQuery.makeArray(data.assets.javascripts), function(idx, url) {
         if (self.javascripts.loadedAsset(url)) {
@@ -371,14 +368,23 @@ var Ajax = function(options) {
       });
     }
 
-    // Callbacks specified in header
+    /**
+     * Insert response
+    */
+    console.log('Using container ',container.selector);
+    console.log('Set data ',data);
+    container.data('ajax-info', data)
+    container.html(responseText);
+    
+    /**
+     * Execute callbacks
+    */
     if (data.callbacks !== undefined) {
       jQuery.each(jQuery.makeArray(data.callbacks), function(idx, callback) {
         self.executeCallback(callback);
       });
     }
     
-    // Registered callbacks
     if (self.callbacks.length > 0) {
       jQuery.each(self.callbacks, function(idx, callback) {
         self.executeCallback(callback);
@@ -386,7 +392,9 @@ var Ajax = function(options) {
       self.callbacks = [];
     }
             
-    // Set cookies
+    /**
+     * Set cookies
+    */
     var cookie = XMLHttpRequest.getResponseHeader('Set-Cookie');
     if (cookie !== null) {
       console.log('Setting cookie');
@@ -414,20 +422,47 @@ var Ajax = function(options) {
   };
 
   /**
+   * Show the loading image.
+   */
+  self.showLoadingImage = function() {
+    var icon = $('#loading-icon-small');
+    
+    // Follow the mouse pointer
+    $(document).bind('mousemove', self.updateImagePosition);
+    
+    // Display at last click coords initially
+    if (self.last_click_coords !== undefined) {
+      self.updateImagePosition(self.last_click_coords);
+      
+    // Center it
+    } else {
+      icon.css({
+  			position:	  'absolute',
+  			left:		    '50%', 
+  			top:		    '50%', 
+  			zIndex:		  '99',
+				marginTop:	parseInt(icon.css('marginTop'), 10) + jQuery(window).scrollTop(), 
+				marginLeft:	parseInt(icon.css('marginLeft'), 10) + jQuery(window).scrollLeft()
+  		});
+  	}
+    icon.show();    
+  };
+  
+  /**
    * Update the position of the loading icon.
    */
   self.updateImagePosition = function(e) {
     $('#loading-icon-small').css({
-      layer: 100,
+      zIndex:   99,
       position: 'absolute',
-      top: e.pageY + 14,
-      left: e.pageX + 14
+      top:      e.pageY + 14,
+      left:     e.pageX + 14
     });
   };
 
   
   /**
-   * addCallback
+   * onLoad
    *
    * Register a callback to be executed in the global scope
    * once all Ajax assets have been loaded.  Callbacks are
@@ -436,7 +471,7 @@ var Ajax = function(options) {
    * If the plugin is disabled, callbacks are executed immediately
    * on DOM ready.
    */
-  self.addCallback = function(callback) {
+  self.onLoad = function(callback) {
     if (self.enabled) {
       self.callbacks.push(callback);
       console.log('[ajax] appending callback', callback);
@@ -446,13 +481,13 @@ var Ajax = function(options) {
   };
 
   /**
-   * prependCallback
+   * prependOnLoad
    *
    * Add a callback to the start of the queue.
    *
-   * @see addCallback
+   * @see onLoad
    */
-  self.prependCallback = function(callback) {
+  self.prependOnLoad = function(callback) {
     if (self.enabled) {
       self.callbacks.unshift(callback);
       console.log('[ajax] prepending callback', callback);
