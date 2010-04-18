@@ -1,14 +1,12 @@
-require 'ajax/url_helpers'
-require 'ajax/rails_helpers'
+require 'ajax/helpers'
 
 module Ajax
+  include Ajax::Helpers
+  
   # Set to the Rails logger by default, assign nil to turn off logging
   class << self
     attr_writer :logger
   end
-
-  extend UrlHelpers
-  extend RailsHelpers
 
   # Dummy a logger if logging is turned off of if Ajax isn't enabled
   def self.logger

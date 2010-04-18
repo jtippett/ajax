@@ -10,6 +10,17 @@ The beauty of <tt>Ajax</tt> is that your Rails application only ever sees tradit
 
 == Intro
 
+<tt>Ajax</tt> handles these common problems:
+
+* SEO/Crawlability/Google Analytics support
+* Browser History
+* Bookmarkability / Deep-linking
+* Redirects
+* Cookies
+* Lazy-loaded Assets
+* Activating Tabs
+* Request Rewriting & Redirecting
+
 <tt>Ajax</tt> requires very little configuration and will work out of the box.  With a few lines of code you can start enjoying a completely AJAX site.
 
 What do I mean by "completely AJAX"?  Everyone uses AJAX.  The difference is that when you go completely AJAX it means that the main page is only loaded once.  Every link now loads content via AJAX.  But unless we change the URL, we will have no history, because that is how browsers determine when your history changes.  The only way to change the URL without causing the browser to make a new request, is to modify the named anchor, or "hashed" part of the URL.  
@@ -38,20 +49,9 @@ In order to load the correct page we must first render a framework page with acc
 
 Configuration is achieved via a Rails initializer file.  Rails helpers are provided to manage the response and there are Spec helpers for testing your Rack middleware and your Rails integration.
 
-<tt>Ajax</tt> handles these common problems:
-
-* SEO/Crawlability/Google Analytics support
-* Browser History
-* Bookmarkability / Deep-linking
-* Redirects
-* Cookies
-* Lazy-loaded Assets
-* Activating Tabs
-* Request Rewriting & Redirecting
-
 == Requirements
 
-You must be running <b>jQuery 1.4.2</t> to use this plugin.  Sorry, Prototype users.
+You must be running <b>jQuery 1.4.2</b> to use this plugin.  Sorry, Prototype users.
 
 == Compatibility
 
@@ -132,7 +132,7 @@ Ajax uses a custom HTTP header <tt>Ajax-Info</tt> to pass JSON back and forth be
 
 There are <tt>ActionView</tt> and <tt>ActionController</tt> helpers to make it easy to set headers in the response.
 
-*<tt>Ajax-Info</tt> headers with special meaning:*
+<b><tt>Ajax-Info</tt> headers with special meaning:</b>
 
 [title]      Set the page title.
 [tab]        jQuery selector, triggers the <tt>activate</tt> event on matched element(s).

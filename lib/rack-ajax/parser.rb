@@ -6,6 +6,8 @@ module Rack
   class Ajax
     class Parser
 
+      # Instantiate an ActionController::Request object to make it
+      # easier to introspect the headers.
       def initialize(env)
         @env = env
         @request = ActionController::Request.new(env)
@@ -33,6 +35,25 @@ module Rack
         @url_is_root ||= ::Ajax.url_is_root?(@env['PATH_INFO'])
       end
 
+      # Return a boolean indicating if the request is from a robot.
+      #
+      # Inspect the headers first - if there are any - so we don't
+      # look in the database unneccessarily.
+      #
+      # Sets the result in a header {Ajax-Info}[user_is_robot] so we 
+      # don't have to repeat this check in the application.
+      def user_is_robot?
+        return @user_is_robot if instance_variable_defined?(:@user_is_robot)
+        @user_is_robot =
+          if @request.user_agent.nil?
+            false
+          else
+            ::Ajax.is_robot?(@request.user_agent)
+          end
+        ::Ajax.set_header(@env, :robot, @user_is_robot)
+        @user_is_robot
+      end
+      
       def rewrite_to_traditional_url_from_fragment
         rewrite(::Ajax.traditional_url_from_fragment(@env['REQUEST_URI']))
       end
@@ -85,7 +106,10 @@ module Rack
         headers.reverse_merge!({'Content-Type' => 'text/html'})
         [code, headers, [msg.to_s]]
       end
-      def rack_response(*args); self.class.rack_response(*args); end
+      
+      def rack_response(*args)
+        self.class.rack_response(*args)
+      end
     end
   end
 end

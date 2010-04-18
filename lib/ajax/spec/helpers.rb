@@ -8,8 +8,8 @@ module Ajax
         @app = Class.new { def call(env); true; end }.new
       end
 
-      def call_rack(url, request_method='GET', &block)
-        env(url, request_method)
+      def call_rack(url, request_method='GET', env={}, &block)
+        env(url, request_method, env)
         @rack = Rack::Ajax.new(@app, &block)
         @response = @rack.call(@env)
       end
@@ -25,6 +25,14 @@ module Ajax
         response_headers['Location'].should == location
       end
 
+      def should_set_ajax_response_header(key, value)
+        response_headers['Ajax-Info'][key].should == value
+      end
+
+      def should_set_ajax_request_header(key, value)
+        @env['Ajax-Info'][key].should == value
+      end
+            
       def should_rewrite_to(url)
         should_be_a_valid_response
 
@@ -57,14 +65,14 @@ module Ajax
         @response[2][0].should be_a_kind_of(String)
       end
 
-      def env(uri, request_method)
+      def env(uri, request_method, options={})
         uri = URI.parse(uri)
         @env = {
           'REQUEST_URI' => uri.to_s,
           'PATH_INFO' => uri.path,
           'QUERY_STRING' => uri.query,
           'REQUEST_METHOD' => request_method
-        }
+        }.merge!(options)
       end
 
       def response_body

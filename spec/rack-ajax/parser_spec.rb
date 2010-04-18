@@ -2,14 +2,32 @@
 # do not invoke Rack.
 require 'spec_helper'
 require 'ajax/spec/helpers'
+require 'uri'
 
 include Ajax::Spec::Helpers
 
-# Test the Rack handling of AJAX urls
+# Test the Rack::Ajax::Parser.  See <tt>lib/rack-ajax-parser.rb</tt>
+#
+# Test Rack middleware using integration tests because the Spec controller tests
+# do not invoke Rack.
 describe Rack::Ajax::Parser, :type => :integration do
   before :all do
     mock_ajax
     create_app
+  end
+
+  it "should recognize robots" do
+    call_rack('/', 'GET', { 'HTTP_USER_AGENT' => 'Googlebot' }) do
+      rack_response(user_is_robot?)
+    end
+    should_set_ajax_request_header('robot', true)
+  end
+  
+  it "should recognize regular users" do
+    call_rack('/', { 'HTTP_USER_AGENT' => 'Safari' }) do
+      rack_response(user_is_robot?)
+    end      
+    should_set_ajax_request_header('robot', false)
   end
 
   it "should be able to tell if a url is root" do
