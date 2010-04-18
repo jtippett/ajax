@@ -1,8 +1,8 @@
 require 'spec_helper'
 
-include Ajax::RailsHelpers
+include Ajax::Helpers::RequestHelper
 
-describe 'Ajax::RailsHelpers' do
+describe 'Ajax::Helpers::RequestHelpers' do
   describe 'set_header' do
     before :each do
       @headers = {}

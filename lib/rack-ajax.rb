@@ -53,8 +53,5 @@ module Rack
         @app.call(env)
       end
     end
-    
-    def default_decision_tree
-    end
   end
 end
