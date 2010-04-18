@@ -1,9 +1,12 @@
+require 'rack-ajax/decision_tree'
 require 'rack-ajax/parser'
 require 'json'
 
 module Rack
   class Ajax
-    cattr_accessor :decision_tree, :default_decision_tree
+    extend Rack::Ajax::DecisionTree
+    
+    cattr_accessor :decision_tree
     attr_accessor :user, :request, :params
 
     # If called with a block, executes that block as the "decision tree".

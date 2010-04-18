@@ -1,5 +1,5 @@
 module Rack
-  module Ajax
+  class Ajax
     module DecisionTree
       
       # Decision tree for Rack rewrites and redirects.

@@ -138,6 +138,7 @@ var Ajax = function(options) {
   self.javascripts = undefined;
   self.stylesheets = new AjaxAssets([], 'css');
   self.callbacks = [];
+  self.loaded = false;
   
   // For initial position of the loading icon.  Often the mouse does not
   // move so position it by the link that was clicked.
@@ -207,6 +208,9 @@ var Ajax = function(options) {
         }
       });
     }
+    self.initialized = true;
+    
+    // Run onInit() callbacks
   };
   
   /**
@@ -246,7 +250,7 @@ var Ajax = function(options) {
       document.location = options.url;
       return true;
     }
-    
+    self.loaded = false;
     self.showLoadingImage();
 
     jQuery.ajax({
@@ -255,8 +259,10 @@ var Ajax = function(options) {
       beforeSend: self.setRequestHeaders,
       success: self.responseHandler,
       complete: function(XMLHttpRequest, responseText) {
-        $(document).unbind('mousemove', self.updateImagePosition);
-        $('#loading-icon-small').hide()
+        // Stop watching the mouse position and scroll to the top of the page.
+        $(document).unbind('mousemove', self.updateImagePosition).scrollTop(0);
+        $('#loading-icon-small').hide();
+        self.loaded = true;
       },
       error: function(XMLHttpRequest, textStatus, errorThrown) {
         var responseText = XMLHttpRequest.responseText;
@@ -472,7 +478,7 @@ var Ajax = function(options) {
    * on DOM ready.
    */
   self.onLoad = function(callback) {
-    if (self.enabled) {
+    if (self.enabled && !self.loaded) {
       self.callbacks.push(callback);
       console.log('[ajax] appending callback', callback);
     } else {
@@ -488,7 +494,7 @@ var Ajax = function(options) {
    * @see onLoad
    */
   self.prependOnLoad = function(callback) {
-    if (self.enabled) {
+    if (self.enabled && !self.loaded) {
       self.callbacks.unshift(callback);
       console.log('[ajax] prepending callback', callback);
     } else {
