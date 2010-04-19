@@ -2,15 +2,28 @@
 
 <b>A Ruby on Rails plugin to augment a traditional Rails application with a completely AJAX frontend, while transparently handling issues important to both the enterprise and end users, such as testing, SEO and browser history.</b>
 
-The <tt>Ajax</tt> philosophy is that you should not have to develop for AJAX:  Your code shouldn't change; your tests shouldn't change; and the way Google sees your site shouldn't change.  (Coming soon, this {link AJAX site crawling spec }[http://code.google.com/web/ajaxcrawling/docs/getting-started.html] may obviate that.)
+The Ajax philosophy is that you should not have to develop for AJAX:  Your code shouldn't change; your tests shouldn't change; and the way Google sees your site shouldn't change.  (Coming soon, this link {AJAX site crawling specification}[http://code.google.com/web/ajaxcrawling/docs/getting-started.html] may obviate that.)
 
-The beauty of <tt>Ajax</tt> is that your Rails application only ever sees traditional requests, so it does not have to be "Ajax aware".
+The beauty of Ajax is that your Rails application only ever sees traditional requests, so it does not have to be "Ajax aware".
 
-<tt>Ajax</tt> is being used live in production on altnet.com[link:http://altnet.com], if you would like to try it out (as of May 1st 2010 or thereabouts).
+Ajax is being used live in production on altnet.com[http://altnet.com], if you would like to try it out (as of May 1st 2010 or thereabouts).
 
-== Intro
+== Install
 
-<tt>Ajax</tt> handles these common problems:
+Install as a Rails plugin only.  See *Compatibility*.
+
+ ./script/plugin install http://github.com/kjvarga/ajax.git
+
+   created: config/initializers/ajax.rb
+   created: public/javascripts/ajax.js
+   created: public/javascripts/jquery.address-1.2rc.js
+   created: public/javascripts/jquery.address-1.2rc.min.js
+   created: public/javascripts/jquery.json-2.2.min.js
+   created: public/images/loading-icon-small.gif
+
+== Introduction
+
+Ajax handles these common problems:
 
 * SEO/Crawlability/Google Analytics support
 * Browser History
@@ -21,7 +34,7 @@ The beauty of <tt>Ajax</tt> is that your Rails application only ever sees tradit
 * Activating Tabs
 * Request Rewriting & Redirecting
 
-<tt>Ajax</tt> requires very little configuration and will work out of the box.  With a few lines of code you can start enjoying a completely AJAX site.
+Ajax requires very little configuration and will work out of the box.  With a few lines of code you can start enjoying a completely AJAX site.
 
 What do I mean by "completely AJAX"?  Everyone uses AJAX.  The difference is that when you go completely AJAX it means that the main page is only loaded once.  Every link now loads content via AJAX.  But unless we change the URL, we will have no history, because that is how browsers determine when your history changes.  The only way to change the URL without causing the browser to make a new request, is to modify the named anchor, or "hashed" part of the URL.  
 
@@ -31,13 +44,13 @@ Where before you would have seen something like <tt>http://example.com/the-beatl
 
 === How does it work?
 
-<tt>Ajax</tt> comprises Rack middleware, Rails integrations and some JavaScript libraries to handle everything from redirecting and rewriting incoming requests, to managing the response headers and content, to handling the browser URL, JavaScript callbacks and client-side events.
+Ajax comprises Rack middleware, Rails integrations and some JavaScript libraries to handle everything from redirecting and rewriting incoming requests, to managing the response headers and content, to handling the browser URL, JavaScript callbacks and client-side events.
 
 Browsers do not send the hashed part of the the URL with page requests, so to an AJAX-ed application, all requests look like they are for root (<code>/</code>).
 
-In order to load the correct page we must first render a framework page with accompanying JavaScript.  The JS examines the URL and then issues another request to the server for the hashed part (which may still be <code>/</code>).
+In order to load the correct page we must first render a framework page with accompanying JavaScript.  The JS examines the URL and then issues another request to the server for the hashed part (which may still be <code>/</code> if the user requested the home page).
 
-=== An example user interaction:
+=== An Example User Interaction
 
 1. User pastes http://example.com/#/beyonce/albums into a browser.
 2. Server receives request for http://example.com/ and renders the framework page.
@@ -45,15 +58,34 @@ In order to load the correct page we must first render a framework page with acc
 5. Server renders http://example.com/beyonce/albums.
 6. Response headers are processed and the response inserted into the page container.
 
+=== Request Handling
+
+Ajax uses a custom HTTP header <tt>Ajax-Info</tt> to pass JSON back and forth between the client and server.  The client sends information about the state of the container, and the server sends new information back.
+
+There are <tt>ActionView</tt> and <tt>ActionController</tt> helpers to make it easy to set headers in the response.  Certain headers have special meaning and can trigger events in your application JavaScript.
+
+=== Robots and External APIS
+
+We detect robots by their User-Agent strings.  If a robot is detected the Ajax handling is bypassed and the robot sees the traditional Rails application.
+
+By default any AJAX or non-GET requests pass through unmodified.
+
+If you need to expose external APIs you can do so using a regular expression that is matched against incoming URLs.
+
 === How do I use it?
 
-Configuration is achieved via a Rails initializer file.  Rails helpers are provided to manage the response and there are Spec helpers for testing your Rack middleware and your Rails integration.
+Little to no configuration is required.
 
-== Requirements
+Rails helpers are provided to help you manage the response handling and there are Spec helpers for testing your Rack middleware and your Rails integration.
+
+== Compatibility
 
 You must be running <b>jQuery 1.4.2</b> to use this plugin.  Sorry, Prototype users.
 
-== Compatibility
+The following JavaScript libraries are required and included in the plugin:
+
+* {jQuery Address 1.2RC}[http://www.asual.com/jquery/address/]
+* jQuery JSON 2.2
 
 === Ruby and Rails:
 
@@ -62,7 +94,7 @@ You must be running <b>jQuery 1.4.2</b> to use this plugin.  Sorry, Prototype us
   
 === Browsers:
 
-See {link jQuery address supported browsers}[http://www.asual.com/jquery/address/docs/]
+(See {jQuery address supported browsers}[http://www.asual.com/jquery/address/docs/].)
 
   * Internet Explorer 6.0+
   * Mozilla Firefox 1.0+
@@ -70,21 +102,6 @@ See {link jQuery address supported browsers}[http://www.asual.com/jquery/address
   * Opera 9.5+
   * Chrome 1.0+
   * Camino 1.0+
- 
-== Install
-
-Install as a Rails plugin:
-
-  ./script/plugin install http://github.com/kjvarga/ajax.git
-  
-The following JavaScript libraries are required and included in the plugin:
-
-* {link jQuery Address 1.2RC}[http://www.asual.com/jquery/address/]
-* jQuery JSON 2.2
-
-Output of the install:
-
-  TODO
 
 = Documentation
 
@@ -97,11 +114,11 @@ To disable the plugin in your environment file:
   # config/environments/test.rb
   Ajax.enabled = false
 
-If you need to you can check the state of the plugin with:
+If you need to, you can check the state of the plugin with:
 
   Ajax.is_enabled?
 
-The bulk of the configuration occurs in <tt>config/initializers/ajax.rb</tt>.  This is where we insert the Rack middleware and indicate which links to except from the request processing.
+Other onfiguration goes in <tt>config/initializers/ajax.rb</tt> such as indicating which links to except from the request processing.  See <i>Excepted Links</i> below.
 
 == Link Handling
 
@@ -119,6 +136,7 @@ Excepted links bypass Ajax request and link handling.  I call these traditional 
 
 Links can be excepted by passing in strings or regular expressions to <code>Ajax.exclude_paths()</code>.  Only pass the path and not the full URL.  The path will be modified to match against other paths as well as against full URLs:
 
+  # config/initializers/ajax.rb
   Ajax.exclude_paths %w[ /login /logout /signup /altnet-pro /my-account/edit /user-session/new ]
   Ajax.exclude_paths [%r[\/my-account\/.*]]
   
@@ -148,8 +166,8 @@ Contributions are welcome.  Please fork the project and send me a pull request w
 
 == Useful Resources
 
-* AjaxPatters[link:http://ajaxpatterns.org/Unique_URLs] useful discussion of techniques for maintaining state using JavaScript to poll for changes to <tt>window.location.hash</tt>.
-* {link jQuery Address}[http://www.asual.com/jquery/address/] JavaScript library for managing the URL.
-* SWFAddress[link: http://www.asual.com/swfaddress/] deep linking solution for Flash.
+* AjaxPatters[http://ajaxpatterns.org/Unique_URLs] useful discussion of techniques for maintaining state using JavaScript to poll for changes to <tt>window.location.hash</tt>.
+* link jQuery Address[http://www.asual.com/jquery/address/] JavaScript library for managing the URL.
+* SWFAddress[http://www.asual.com/swfaddress/] deep linking solution for Flash.
 
 Copyright (c) 2010 Karl Varga, released under the MIT license
