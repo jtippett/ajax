@@ -3,12 +3,14 @@ require 'ajax/helpers'
 module Ajax
   include Ajax::Helpers
   
-  # Set to the Rails logger by default, assign nil to turn off logging
   class << self
     attr_writer :logger
   end
 
-  # Dummy a logger if logging is turned off of if Ajax isn't enabled
+  # Return a logger instance.
+  #
+  # Use the Rails logger by default, assign nil to turn off logging.
+  # Dummy a logger if logging is turned off of if Ajax isn't enabled.
   def self.logger
     if !@logger.nil? && is_enabled?
       @logger
@@ -33,7 +35,11 @@ module Ajax
     @enabled = !!value
   end
 
-  # Return a boolean indicating whether the plugin is being mock tested
+  # Return a boolean indicating whether the plugin is being mock tested.
+  #
+  # Mocking forces the environment to be returned after Ajax processing
+  # so that we can introspect it and verify that the correct actions were
+  # taken.
   def self.is_mocked?
     @mocked ||= false
   end
@@ -53,8 +59,10 @@ module Ajax
   #
   # This method is called by <tt>init.rb</tt>, which is run by Rails on startup.
   #
-  # To prevent installing Ajax
-  def self.install
+  # Customize rendering.  Include custom headers and don't render the layout for AJAX.
+  # Insert the Rack::Ajax middleware to rewrite and handle requests.
+  # Add custom attributes to outgoing links.
+  def self.install_for_rails
     if defined?(Rails)
       Ajax.logger = Rails.logger
 

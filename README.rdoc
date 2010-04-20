@@ -21,6 +21,8 @@ Install as a Rails plugin only.  See *Compatibility*.
    created: public/javascripts/jquery.json-2.2.min.js
    created: public/images/loading-icon-small.gif
 
+After installing, create layouts in <tt>app/views/layouts/ajax/</tt> that mimic your existing layouts.  See <b>Request Handling -> Layouts</b>.
+
 == Introduction
 
 Ajax handles these common problems:
@@ -48,7 +50,7 @@ Where before you would have seen something like <tt>http://example.com/the-beatl
 
 Ajax comprises Rack middleware, Rails integrations and some JavaScript libraries to handle everything from redirecting and rewriting incoming requests, to managing the response headers and content, to handling the browser URL, JavaScript callbacks and client-side events.
 
-Browsers do not send the hashed part of the the URL with page requests, so to an AJAX-ed application, all requests look like they are for root (<code>/</code>).
+Browsers do not send the hashed part of the the URL with page requests, so to an AJAX-ed application, all requests look like they are for root.
 
 In order to load the correct page we must first render a framework page with accompanying JavaScript.  The JS examines the URL and then issues another request to the server for the hashed part (which may still be <code>/</code> if the user requested the home page).
 
@@ -62,7 +64,7 @@ In order to load the correct page we must first render a framework page with acc
 
 === Request Handling
 
-Ajax uses a custom HTTP header <tt>Ajax-Info</tt> to pass JSON back and forth between the client and server.  The client sends information about the state of the container, and the server sends new information back.
+<b>Ajax uses a custom HTTP header <tt>Ajax-Info</tt> to pass JSON back and forth between the client and server.</b>  The client sends information about the state of the container, and the server sends new information back.
 
 By default the current layout is sent in the <tt>Ajax-Info</tt> header.  This can be useful for determining which assets to include, or layout to render in your response.
 
@@ -76,15 +78,11 @@ By default the current layout is sent in the <tt>Ajax-Info</tt> header.  This ca
 
 === Robots and External APIS
 
-We detect robots by their User-Agent strings.  If a robot is detected the Ajax handling is bypassed and the robot sees the traditional Rails application.
+<b>We detect robots by their User-Agent strings.</b>  If a robot is detected the Ajax handling is bypassed and the robot sees the traditional Rails application.
 
 By default any AJAX or non-GET requests pass through unmodified.
 
 If you need to expose external APIs you can do so using a regular expression that is matched against incoming URLs.
-
-== Documentation / APIs
-
-Please browse the {API documentation at rDoc.info}[http://rdoc.info/projects/kjvarga/ajax]
 
 == Compatibility
 
@@ -111,7 +109,10 @@ The following JavaScript libraries are required and included in the plugin:
   * Chrome 1.0+
   * Camino 1.0+
 
-= Rails
+
+= Documentation
+
+Please browse the {API documentation at rDoc.info}[http://rdoc.info/projects/kjvarga/ajax]
 
 == Configuration
 
@@ -126,21 +127,47 @@ If you need to, you can check the state of the plugin with:
 
   Ajax.is_enabled?
 
-Other onfiguration goes in <tt>config/initializers/ajax.rb</tt> such as indicating which links to except from the request processing.  See <i>Excepted Links</i> below.
+Other onfiguration goes in <tt>config/initializers/ajax.rb</tt> such as indicating which links to except from the request processing.  See <b>Excepted Links</b>.
+
+== Ajax Layouts
+
+Typically AJAX content does not render a layout because we just want to update a fragment of a page.  Automatically turning off layouts when rendering AJAX is one option, but what about when we do want to use a layout?
+
+My solution is to first look in <tt>app/views/layouts/ajax/</tt> for a layout with the same name as the default layout for the current action.  If a layout is found, we use it, otherwise the default layout is used.
+
+In your Ajax layouts you can define callbacks, tabs to activate or the container to receive content.
+
+For example, our layouts:
+
+  layouts/
+    _assets.html.haml
+    ajax/
+      application.html.haml
+      single_column.html.haml
+      two_column.html.haml
+    application.html.haml
+    single_column.html.haml
+    two_column.html.haml
+
+Gists
+* {ajax/application.html.haml}[http://gist.github.com/373133#file_application.html.haml]
+* {ajax/two_column.html.haml}[http://gist.github.com/373133#file_two_column.html.haml]
 
 == Link Handling
 
-All links which are rendered using the <tt>link_to</tt> (or any other url) helper method automatically include a <tt>data-deep-link</tt> attribute containing the path from the link's HREF.
+<b>All links which are rendered using the <tt>link_to</tt> (or any other url) helper method automatically include a <tt>data-deep-link</tt> attribute</b> containing the path from the link's HREF.
 
 The Ajax JavaScript class listens for clicks on any link with a <tt>data-deep-link</tt> attribute and loads the link's content using AJAX.
 
 Should you need to, you can set this attribute on a link by passing in HTML options to <tt>link_to</tt>:
 
   link_to odd_url, {}, { :data-deep-link => '/even/odder/url' }
- 
+
+To manually mark a link as traditional, pass <code>:traditional => true</code> or <code>:data-deep-link => nil</code>.
+
 === Excepted Links
 
-Excepted links bypass Ajax request and link handling.  I call these traditional links.
+<b>Excepted links bypass Ajax request and link handling.</b>  I call these traditional links.
 
 Links can be excepted by passing in strings or regular expressions to <code>Ajax.exclude_paths()</code>.  Only pass the path and not the full URL.  The path will be modified to match against other paths as well as against full URLs:
 
@@ -154,7 +181,65 @@ Excepted links when rendered do not contain the <tt>data-deep-link</tt> attribut
 
 == Rails Helpers
 
+Use the <tt>ajax_header</tt> helper in your controllers or views to add data to the <tt>Ajax-Info</tt> header.  Values are converted to JSON before being sent over the wire.  Internally this function uses <code>Ajax.set_header</code>.
 
+You can use <code>Ajax.get_header</code> to inspect <tt>Ajax-Info</tt> header values.  See the <b>In Views</b> example.
+
+=== In Controllers
+
+In controllers, <tt>ajax_header</tt> uses an <tt>after_filter</tt> to add content to the response.  It therefore accepts passing a block instead of a static value, as well as <tt>:only</tt> and <tt>:except</tt> modifiers, e.g:
+
+  # app/controllers/application_controller.rb
+  ajax_header :title { dynamic_page_attribute(:page_title) || "Music @ Altnet" }  
+  ajax_header :assets do
+    { :stylesheets => [current_controller_stylesheet] }
+  end
+  
+  # app/controllers/browse_controller.rb
+  ajax_header :tab, '#header .nav li:contains(Music)', :only => [:music, :artists, :albums, :tracks, :new_releases]
+  ajax_header :tab, '#header .nav li:contains(Playlists)',  :only => :playlists
+  ajax_header :tab, '#header .nav li:contains(DJs)', :only => :djs
+
+  # app/controllers/activity_controller.rb
+  ajax_header :tab, '#header .nav li:contains(Realtime)'
+  ajax_header :assets, { :javascripts => javascript_files_for_expansion(:juggernaut_jquery) }
+  
+Array and Hash values are merged so you can call <tt>ajax_header</tt> multiple times.  For example, the asset Hash and Array values will be merged.
+
+=== In Views
+
+The syntax is similar to the controller version, except that we do not use an <tt>after_filter</tt>, so you cannot pass a block or <tt>:only</tt> and <tt>:except</tt> modifiers.
+
+See {ajax/two_column.html.haml}[http://gist.github.com/373133#file_two_column.html.haml] for an example.
+
+== Lazy-loading Assets
+
+Use <code>ajax_header :assets { :stylesheets => [], :javascripts => [] }</code> to define assets that a page depends on.  These assets will be loaded before the response content is inserted into the DOM.
+
+Assets that have already been loaded are not loaded again, so it is safe to always include the assets header.
+
+If you need to perform operations on the new content, or instantiate objects defined in the dependent assets, use <b>JavaScript Callbacks</b>.
+
+== <a name="callbacks">JavaScript Callbacks</a>
+
+To add a JavaScript callback(s) that will be executed <b>after any assets in <tt>Ajax-Info['assets']</tt> have been loaded</b> you can pass it in the header with the following.  These callbacks are executed in the global scope:
+
+  ajax_header, :callbacks, 'window.player.init();'
+  
+Alternatively you may want to bind callbacks directly to the <tt>window.ajax</tt> object in your view:
+
+  # app/views/activity/recent.html.haml
+  window.ajax.onLoad('window.juggernaut = new Juggernaut(#{juggernaut_options.to_json}); window.liveFeed.init();');
+  window.ajax.prependOnLoad("$(document).trigger('player.init');");
+  
+When we add the juggernaut callback it must be a string because Juggernaut is defined in one of the assets that hasn't been loaded yet.
+
+<tt>window.ajax.prependOnLoad</tt> adds the callback to the front of the queue.  Callbacks can also be functions, for example:
+
+  window.ajax.onLoad(function() {
+    alert('All your asset are ours!');
+  });
+  
 == Contributions
 
 Contributions are welcome.  Please fork the project and send me a pull request with your changes and Spec tests.

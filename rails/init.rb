@@ -1,4 +1,4 @@
 require 'ajax'
 require 'rack-ajax'
 
-Ajax.install
+Ajax.install_for_rails
