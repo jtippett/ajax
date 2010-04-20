@@ -34,11 +34,13 @@ Ajax handles these common problems:
 * Activating Tabs
 * Request Rewriting & Redirecting
 
-Ajax requires very little configuration and will work out of the box.  With a few lines of code you can start enjoying a completely AJAX site.
+Ajax converts a traditional Rails application to use a completely AJAX frontend.
 
-What do I mean by "completely AJAX"?  Everyone uses AJAX.  The difference is that when you go completely AJAX it means that the main page is only loaded once.  Every link now loads content via AJAX.  But unless we change the URL, we will have no history, because that is how browsers determine when your history changes.  The only way to change the URL without causing the browser to make a new request, is to modify the named anchor, or "hashed" part of the URL.  
+What do I mean by "completely AJAX"?  Everyone uses AJAX.  What we mean when we say "completely AJAX" is that the main page is only loaded once.  Every link now loads content via AJAX.
 
-So now your traditional links auto-magically load content via AJAX into a page container and update the browser URL with the new URL, creating history and enabling bookmarkability.
+But if we do that, the URL will never change and we will have no history, because that is how browsers determine history.  It turns out the only way to change the URL without causing the browser to issue a new request, is to modify the named anchor - or "hashed" - part of the URL.  
+
+So now your traditional links auto-magically load content via AJAX into a page container and update the browser URL with the new URL.  You have all the benefits of AJAX as well as history and link bookmarkability.
 
 Where before you would have seen something like <tt>http://example.com/the-beatles/history</tt>, now you would see <tt>http://example.com/#/the-beatles/history</tt>.  Notice the <tt>#/</tt>?
 
@@ -62,7 +64,15 @@ In order to load the correct page we must first render a framework page with acc
 
 Ajax uses a custom HTTP header <tt>Ajax-Info</tt> to pass JSON back and forth between the client and server.  The client sends information about the state of the container, and the server sends new information back.
 
-There are <tt>ActionView</tt> and <tt>ActionController</tt> helpers to make it easy to set headers in the response.  Certain headers have special meaning and can trigger events in your application JavaScript.
+By default the current layout is sent in the <tt>Ajax-Info</tt> header.  This can be useful for determining which assets to include, or layout to render in your response.
+
+<b><tt>Ajax-Info</tt> headers with special meaning:</b>
+
+[title]      Sets the page title.
+[tab]        jQuery selector, triggers the <tt>activate</tt> event on matched element(s).
+[container]  jQuery selector, the container to receive the content (default:  <tt>default_container</tt>).
+[assets]     Hash of JavaScript and CSS assets to load <code>{ :javascripts => [], :stylesheets => [] }</code>
+[callbacks]  List of string callbacks to execute after assets have finished loading.
 
 === Robots and External APIS
 
@@ -72,11 +82,9 @@ By default any AJAX or non-GET requests pass through unmodified.
 
 If you need to expose external APIs you can do so using a regular expression that is matched against incoming URLs.
 
-=== How do I use it?
+== Documentation / APIs
 
-Little to no configuration is required.
-
-Rails helpers are provided to help you manage the response handling and there are Spec helpers for testing your Rack middleware and your Rails integration.
+Please browse the {API documentation at rDoc.info}[http://rdoc.info/projects/kjvarga/ajax]
 
 == Compatibility
 
@@ -103,7 +111,7 @@ The following JavaScript libraries are required and included in the plugin:
   * Chrome 1.0+
   * Camino 1.0+
 
-= Documentation
+= Rails
 
 == Configuration
 
@@ -144,21 +152,8 @@ Typically, we except pages that require HTTPS, like signup forms, because includ
 
 Excepted links when rendered do not contain the <tt>data-deep-link</tt> attribute if they are rendered with the <tt>link_to</tt> (or any other url) helper method.
 
-== Request Handling
+== Rails Helpers
 
-Ajax uses a custom HTTP header <tt>Ajax-Info</tt> to pass JSON back and forth between the client and server.  The client sends information about the state of the container, and the server sends new information back.
-
-There are <tt>ActionView</tt> and <tt>ActionController</tt> helpers to make it easy to set headers in the response.
-
-<b><tt>Ajax-Info</tt> headers with special meaning:</b>
-
-[title]      Set the page title.
-[tab]        jQuery selector, triggers the <tt>activate</tt> event on matched element(s).
-[container]  The container to receive the content, or <tt>default_container</tt>.
-[assets]     JavaScript and CSS assets to load.
-[callbacks]  Callbacks to execute after assets have finished loaded.
-
-More docs to come...
 
 == Contributions
 
