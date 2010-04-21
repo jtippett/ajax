@@ -63,7 +63,7 @@ Gem::Specification.new do |s|
   s.homepage = %q{http://github.com/kjvarga/ajax}
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.3.6}
+  s.rubygems_version = %q{1.3.5}
   s.summary = %q{A framework to augment a traditional Rails application with a completely AJAX frontend.}
 
   if s.respond_to? :specification_version then
