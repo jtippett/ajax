@@ -10,10 +10,46 @@ Ajax is being used live in production on altnet.com[http://altnet.com], if you w
 
 == Install
 
-Install as a Rails plugin only.  See *Compatibility*.
+After installing, create layouts in <tt>app/views/layouts/ajax/</tt> that mimic your existing layouts.  See <b>Request Handling -> Layouts</b>.
 
- ./script/plugin install http://github.com/kjvarga/ajax.git
+=== Rails 3
 
+1. Add the gem to your <tt>Gemspec</tt>
+
+     gem 'ajax'
+
+2. <tt>bundle install</tt>
+3. <tt>rake ajax:install</tt>
+    
+=== Rails 2.x.x
+
+<b> As a Gem</b>
+
+1. Add the gem as a dependency in your <tt>config/environment.rb</tt>
+
+     config.gem 'ajax'
+
+2. <tt>rake gems:install</tt>
+
+3. Add to your <tt>Rakefile</tt>
+
+     begin
+       require 'ajax/tasks'
+     rescue Exception => e
+       puts "Warning, couldn't load gem tasks: #{e.message}! Skipping..."
+     end
+
+4. <tt>rake ajax:install</tt> to install required files.  This command is safe to run multiple times.  It will skip existing files.
+
+<b> As a Plugin</b>
+
+  ./script/plugin install http://github.com/kjvarga/ajax.git
+
+=== Sample Output
+
+   $ rake ajax:install
+   created: app/controllers/ajax_controller.rb
+   created: app/views/ajax/framework.html.erb
    created: config/initializers/ajax.rb
    created: public/javascripts/ajax.js
    created: public/javascripts/jquery.address-1.2rc.js
@@ -21,8 +57,11 @@ Install as a Rails plugin only.  See *Compatibility*.
    created: public/javascripts/jquery.json-2.2.min.js
    created: public/images/loading-icon-small.gif
 
-After installing, create layouts in <tt>app/views/layouts/ajax/</tt> that mimic your existing layouts.  See <b>Request Handling -> Layouts</b>.
-
+   $ rake ajax:install
+   skipped: app/controllers/ajax_controller.rb exists!
+   skipped: app/views/ajax/framework.html.erb exists!
+   ...
+   
 == Introduction
 
 Ajax handles these common problems:
@@ -52,7 +91,7 @@ Ajax comprises Rack middleware, Rails integrations and some JavaScript libraries
 
 Browsers do not send the hashed part of the the URL with page requests, so to an AJAX-ed application, all requests look like they are for root.
 
-In order to load the correct page we must first render a framework page with accompanying JavaScript.  The JS examines the URL and then issues another request to the server for the hashed part (which may still be <code>/</code> if the user requested the home page).
+In order to load the correct page we must first render a framework page with accompanying JavaScript.  The JS examines the URL and then issues another request to the server for the hashed part (which may still be <tt>/</tt> if the user requested the home page).
 
 === An Example User Interaction
 
@@ -73,7 +112,7 @@ By default the current layout is sent in the <tt>Ajax-Info</tt> header.  This ca
 [title]      Sets the page title.
 [tab]        jQuery selector, triggers the <tt>activate</tt> event on matched element(s).
 [container]  jQuery selector, the container to receive the content (default:  <tt>default_container</tt>).
-[assets]     Hash of JavaScript and CSS assets to load <code>{ :javascripts => [], :stylesheets => [] }</code>
+[assets]     Hash of JavaScript and CSS assets to load <tt>{ :javascripts => [], :stylesheets => [] }</tt>
 [callbacks]  List of string callbacks to execute after assets have finished loading.
 
 === Robots and External APIS
@@ -108,7 +147,6 @@ The following JavaScript libraries are required and included in the plugin:
   * Opera 9.5+
   * Chrome 1.0+
   * Camino 1.0+
-
 
 = Documentation
 
@@ -163,13 +201,13 @@ Should you need to, you can set this attribute on a link by passing in HTML opti
 
   link_to odd_url, {}, { :data-deep-link => '/even/odder/url' }
 
-To manually mark a link as traditional, pass <code>:traditional => true</code> or <code>:data-deep-link => nil</code>.
+To manually mark a link as traditional, pass <tt>:traditional => true</tt> or <tt>:data-deep-link => nil</tt>.
 
 === Excepted Links
 
 <b>Excepted links bypass Ajax request and link handling.</b>  I call these traditional links.
 
-Links can be excepted by passing in strings or regular expressions to <code>Ajax.exclude_paths()</code>.  Only pass the path and not the full URL.  The path will be modified to match against other paths as well as against full URLs:
+Links can be excepted by passing in strings or regular expressions to <tt>Ajax.exclude_paths()</tt>.  Only pass the path and not the full URL.  The path will be modified to match against other paths as well as against full URLs:
 
   # config/initializers/ajax.rb
   Ajax.exclude_paths %w[ /login /logout /signup /altnet-pro /my-account/edit /user-session/new ]
@@ -181,9 +219,9 @@ Excepted links when rendered do not contain the <tt>data-deep-link</tt> attribut
 
 == Rails Helpers
 
-Use the <tt>ajax_header</tt> helper in your controllers or views to add data to the <tt>Ajax-Info</tt> header.  Values are converted to JSON before being sent over the wire.  Internally this function uses <code>Ajax.set_header</code>.
+Use the <tt>ajax_header</tt> helper in your controllers or views to add data to the <tt>Ajax-Info</tt> header.  Values are converted to JSON before being sent over the wire.  Internally this function uses <tt>Ajax.set_header</tt>.
 
-You can use <code>Ajax.get_header</code> to inspect <tt>Ajax-Info</tt> header values.  See the <b>In Views</b> example.
+You can use <tt>Ajax.get_header</tt> to inspect <tt>Ajax-Info</tt> header values.  See the <b>In Views</b> example.
 
 === In Controllers
 

@@ -6,7 +6,7 @@ module Ajax
         alias_method_chain :redirect_to_full_url, :ajax
 
         append_after_filter :process_response_headers
-      end if Ajax.is_enabled?
+      end
       klass.extend(ClassMethods)
     end
 
@@ -60,6 +60,7 @@ module Ajax
       # For AJAX requests, respond with an AJAX-suitable
       # redirect.
       def redirect_to_full_url_with_ajax(url, status)
+        return redirect_to_full_url_without_ajax(url, status) unless Ajax.is_enabled?
         raise DoubleRenderError if performed?
         
         if url == request.headers["Referer"] && !request.headers['Ajax-Info'].blank?
@@ -91,10 +92,11 @@ module Ajax
       #
       # Intercept rendering to customize the headers and layout handling
       #
-      def render_with_ajax(options = nil, extra_options = {}, &block) #:nodoc:
-        original_args = [options, extra_options]
+      def render_with_ajax(options = nil, extra_options = {}, &block)
+        return render_without_ajax(options, extra_options, &block) unless Ajax.is_enabled?
         
-        if Ajax.is_enabled? && request.xhr?
+        original_args = [options, extra_options]
+        if request.xhr?
 
           # Options processing taken from ActionController::Base#render
           if options.nil?

@@ -1,4 +1,4 @@
-AJAX_ROOT = File.dirname(__FILE__)
+AJAX_ROOT = File.expand_path(File.join(File.dirname(__FILE__), '..'))
 
 %w[
   app/controllers/ajax_controller.rb
@@ -13,7 +13,11 @@ AJAX_ROOT = File.dirname(__FILE__)
   if File.exist?(File.join(Rails.root, file))
     puts "skipped: #{file} exists!"
   else
-    FileUtils.cp(File.join(AJAX_ROOT, file), File.join(Rails.root, file))
-    puts "created: #{file}"
+    begin
+      FileUtils.cp(File.join(AJAX_ROOT, file), File.join(Rails.root, file))
+      puts "created: #{file}"
+    rescue Exception => e
+      puts "skipped: #{file} #{e.message}"
+    end
   end
 end
