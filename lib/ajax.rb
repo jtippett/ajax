@@ -25,7 +25,10 @@ module Ajax
   def self.is_enabled?
     @enabled.nil? ? true : !!@enabled
   end
-
+  class << self
+    alias_method :enabled?, :is_enabled?
+  end
+  
   # Set to false to disable this plugin completely.
   #
   # ActionController and ActionView helpers are still mixed in but
@@ -35,6 +38,24 @@ module Ajax
     @enabled = !!value
   end
 
+  # Return a boolean indicating whether to enable lazy loading assets.
+  # There are currently issues with some browsers when using this feature.
+  #
+  # Disabled by default.
+  def self.lazy_load_assets?
+    @lazy_load_assets.nil? ? false : !!@lazy_load_assets
+  end
+
+  # Set to false to disable lazy loading assets.  Callbacks will
+  # be executed immediately.
+  #
+  # ActionController and ActionView helpers are still mixed in but
+  # they are effectively disabled, which means your code will still
+  # run.
+  def self.lazy_load_assets=(value)
+    @lazy_load_assets = !!value
+  end
+  
   # Return a boolean indicating whether the plugin is being mock tested.
   #
   # Mocking forces the environment to be returned after Ajax processing

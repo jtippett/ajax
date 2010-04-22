@@ -204,6 +204,7 @@ var Ajax = function(options) {
   self.stylesheets = new AjaxAssets([], 'css');
   self.callbacks = [];
   self.loaded = false;
+  self.lazy_load_assets = false;
   
   // For initial position of the loading icon.  Often the mouse does not
   // move so position it by the link that was clicked.
@@ -214,6 +215,9 @@ var Ajax = function(options) {
   self.default_container = options.default_container;
   if (options.enabled !== undefined) {
     self.enabled = options.enabled;
+  }
+  if (options.lazy_load_assets !== undefined) {
+    self.lazy_load_assets = options.lazy_load_assets;
   }
   
   // Initialize on DOM ready
@@ -417,7 +421,7 @@ var Ajax = function(options) {
     /**
      * Load stylesheets
     */
-    if (data.assets && data.assets.stylesheets !== undefined) {
+    if (self.lazy_load_assets && data.assets && data.assets.stylesheets !== undefined) {
       jQuery.each(jQuery.makeArray(data.assets.stylesheets), function(idx, url) {
         if (self.stylesheets.loadedAsset(url)) {
           console.log('[ajax] skipping css', url);
@@ -447,7 +451,7 @@ var Ajax = function(options) {
     /**
      * Load javascipts
     */    
-    if (data.assets && data.assets.javascripts !== undefined) {
+    if (self.lazy_load_assets && data.assets && data.assets.javascripts !== undefined) {
       var count = data.assets.javascripts.length;
       var callback;
       
@@ -469,12 +473,15 @@ var Ajax = function(options) {
     $(document).trigger('ajax.onload');
     
     /**
-     * Set cookies
+     * Set cookies - browsers don't seem to allow this
     */
-    var cookie = XMLHttpRequest.getResponseHeader('Set-Cookie');
-    if (cookie !== null) {
-      console.log('Setting cookie');
-      document.cookie = cookie;
+    try {
+      var cookie = XMLHttpRequest.getResponseHeader('Set-Cookie');
+      if (cookie !== null) {
+        console.log('Setting cookie');
+        document.cookie = cookie;
+      }
+    } catch(e) {
     }
   };
 
@@ -553,7 +560,7 @@ var Ajax = function(options) {
    * on DOM ready.
    */
   self.onLoad = function(callback) {
-    if (self.enabled && !self.loaded) {
+    if (self.enabled && (self.lazy_load_assets && !self.loaded)) {
       self.callbacks.push(callback);
       console.log('[ajax] appending callback', self.teaser(callback));
     } else {
