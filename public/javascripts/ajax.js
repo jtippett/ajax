@@ -176,22 +176,36 @@ var AjaxAssets = function(array, type) {
  *
  * Options:
  *    <tt>enabled</tt>  boolean indicating whether the plugin is enabled.
- *      This must be set if you are using Ajax callbacks in your code,
- *      and you want them to still fire if Ajax is not enabled.
+ *      Callbacks that you set in the Ajax-Info header or directly on
+ *      this instance will still be executed.  They will not be queued,
+ *      the will be executed immediately.
  *
  *    <tt>default_container</tt>  string jQuery selector of the default
  *      container element to receive content.
  *
+ *    <tt>lazy_load_assets</tt>  boolean indicating whether to enable
+ *      lazy loading assets.  If this is disabled, callbacks will be
+ *      executed immediately.
+ *
  * Callbacks:
  *
- * Callbacks can be specified using Ajax-Info{ callbacks: 'javascript to eval' },
- * or by adding callbacks directly to the Ajax instance:
+ * Callbacks can be specified using Ajax-Info{ callbacks: 'javascript to eval.' },
+ * or by adding callbacks directly to the Ajax instance.
+ *
+ * 'onLoad' callbacks are executed once new content has been inserted into the DOM,
+ * and after all assets have been loaded (if using lazy-loading). I.e. "on page load".
+ *
+ * For example:
  *
  *    window.ajax.onLoad(function() { doSomething(args); });
  *
- * Order of execution:
+ * To add a callback to the front of the queue use:
  *
+ *    window.ajax.prependOnLoad(function() { doSomething(args); });
  *
+ * KJV 2010-04-22: I've experienced problems with Safari using String callbacks.  YMMV.
+ * Browser support for callbacks is patchy at this time so lazy-loading is
+ * not recommended.
  */
 var Ajax = function(options) {
   var self = this;

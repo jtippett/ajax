@@ -2,15 +2,13 @@
 
 <b>A Ruby on Rails plugin to augment a traditional Rails application with a completely AJAX frontend, while transparently handling issues important to both the enterprise and end users, such as testing, SEO and browser history.</b>
 
-The Ajax philosophy is that you should not have to develop for AJAX:  Your code shouldn't change; your tests shouldn't change; and the way Google sees your site shouldn't change.  (Coming soon, this link {AJAX site crawling specification}[http://code.google.com/web/ajaxcrawling/docs/getting-started.html] may obviate that.)
+The Ajax philosophy is that you shouldn't have to develop for AJAX:  Your code shouldn't change; your tests shouldn't change; and the way Google sees your site shouldn't change.
 
 The beauty of Ajax is that your Rails application only ever sees traditional requests, so it does not have to be "Ajax aware".
 
 Ajax is being used live in production on altnet.com[http://altnet.com], if you would like to try it out (as of May 1st 2010 or thereabouts).
 
 == Install
-
-After installing, create layouts in <tt>app/views/layouts/ajax/</tt> that mimic your existing layouts.  See <b>Request Handling -> Layouts</b>.
 
 === Rails 3
 
@@ -47,20 +45,31 @@ After installing, create layouts in <tt>app/views/layouts/ajax/</tt> that mimic 
 
 === Sample Output
 
-   $ rake ajax:install
-   created: app/controllers/ajax_controller.rb
-   created: app/views/ajax/framework.html.erb
-   created: config/initializers/ajax.rb
-   created: public/javascripts/ajax.js
-   created: public/javascripts/jquery.address-1.2rc.js
-   created: public/javascripts/jquery.address-1.2rc.min.js
-   created: public/javascripts/jquery.json-2.2.min.js
-   created: public/images/loading-icon-small.gif
+  $ rake ajax:install
+  created: app/controllers/ajax_controller.rb
+  created: app/views/ajax/framework.html.erb
+  created: config/initializers/ajax.rb
+  created: public/javascripts/ajax.js
+  created: public/javascripts/jquery.address-1.2rc.js
+  created: public/javascripts/jquery.address-1.2rc.min.js
+  created: public/javascripts/jquery.json-2.2.min.js
+  created: public/images/loading-icon-small.gif
 
-   $ rake ajax:install
-   skipped: app/controllers/ajax_controller.rb exists!
-   skipped: app/views/ajax/framework.html.erb exists!
-   ...
+  $ rake ajax:install
+  skipped: app/controllers/ajax_controller.rb exists!
+  skipped: app/views/ajax/framework.html.erb exists!
+  ...
+
+=== Post Install
+
+1. Create layouts in <tt>app/views/layouts/ajax/</tt> that mimic your existing layouts.  See <b>Request Handling -> Layouts</b>.
+2. Instantiate an instance of the Ajax class in <tt>application.js</tt>.  For example:
+
+      window.ajax = new Ajax({
+        default_container: '#main',
+        enabled: true,
+        lazy_load_assets: false
+      });
    
 == Introduction
 
@@ -155,6 +164,10 @@ Please browse the {API documentation at rDoc.info}[http://rdoc.info/projects/kjv
 == Configuration
 
 It is important to be able to disable the plugin when you don't want it interfering, like when you are testing.  You will also want to ensure that your site's JavaScript still works when the plugin is disabled.
+
+<b>If Ajax is disabled</b>, your site will act like a traditional Rails application.  Because each request will be a traditional request, <b>callbacks specified in the Ajax-Info header will not be parsed by the browser, and so will not execute.</b>
+
+<b>Callbacks added directly to the <tt>window.ajax</tt> instance will still be executed, and they will execute immediately.</b>
 
 To disable the plugin in your environment file:
   
@@ -252,40 +265,118 @@ See {ajax/two_column.html.haml}[http://gist.github.com/373133#file_two_column.ht
 
 == Lazy-loading Assets
 
+<b>KJV 2010-04-22:</b>  Browser support for callbacks (specifically the problem of calling them only *after* all assets have loaded) is patchy/inconsistent at this time so lazy-loading is not recommended.  It has been disabled by default.  Once all browsers can be supported this may change.
+
+<b>The recommended way of dynamically enabling/disabling lazy loading:</b>
+
+  # environment/initializer
+  Ajax.lazy_load_assets = false # or true
+
+  # application layout (HAML example)
+  :javascript
+    var AJAX_LAZY_LOAD_ASSETS = #{Ajax.lazy_load_assets?};
+
+  if !Ajax.lazy_load_assets
+    include_all_assets
+  end
+
+  # application.js
+  window.ajax = new Ajax({
+    lazy_load_assets: window.AJAX_LAZY_LOAD_ASSETS !== undefined ? window.AJAX_LAZY_LOAD_ASSETS : false
+  });
+
 Use <code>ajax_header :assets { :stylesheets => [], :javascripts => [] }</code> to define assets that a page depends on.  These assets will be loaded before the response content is inserted into the DOM.
 
-Assets that have already been loaded are not loaded again, so it is safe to always include the assets header.
+1. Assets that have already been loaded are not loaded again
+2. Assets that are loaded, remain loaded (watch out for CSS conflicts and JS memory leaks)
+3. If lazy-loading assets is disabled, assets in the <tt>Ajax-Info</tt> header are ignored, but callbacks are still executed.
 
-If you need to perform operations on the new content, or instantiate objects defined in the dependent assets, use <b>JavaScript Callbacks</b>.
+Often you will need to perform some DOM manipulations on the newly inserted content, or instantiate JavaScript objects that are defined in a lazy-loaded JS file.  To execute some JavaScript after all assets have been loaded and the new content has been inserted, use <b>JavaScript Callbacks</b>.
 
-== <a name="callbacks">JavaScript Callbacks</a>
+== JavaScript Callbacks
 
-To add a JavaScript callback(s) that will be executed <b>after any assets in <tt>Ajax-Info['assets']</tt> have been loaded</b> you can pass it in the header with the following.  These callbacks are executed in the global scope:
+JavaScript callbacks can be added to the response and will be executed after any assets in <tt>Ajax-Info['assets']</tt> have been loaded.  (If lazy loading assets is disabled, they are executed immediately.)
+
+You can bind callbacks directly to the <tt>window.ajax</tt> object in your view, for example, in HAML we could have:
+
+  :javascript
+    window.ajax.onLoad(function() {
+      window.juggernaut = new window.Juggernaut(#{juggernaut_options.to_json});
+      window.liveFeed.init();
+    });
+
+    window.ajax.prependOnLoad(function() {
+      $(document).trigger('player.init');
+    });
+  
+In the <tt>onLoad</tt> callback I'm scoping everything to <tt>window</tt> to <b>avoid scoping issues</b> in different browsers.
+
+<b><tt>window.ajax.prependOnLoad</tt><b> adds the callback to the front of the queue.
+
+Alternatively callbacks can be passed as a list of Strings in the <tt>Ajax-Info</tt> header using the <tt>ajax_header</tt> helper:
 
   ajax_header, :callbacks, 'window.player.init();'
-  
-Alternatively you may want to bind callbacks directly to the <tt>window.ajax</tt> object in your view:
 
-  # app/views/activity/recent.html.haml
-  window.ajax.onLoad('window.juggernaut = new Juggernaut(#{juggernaut_options.to_json}); window.liveFeed.init();');
-  window.ajax.prependOnLoad("$(document).trigger('player.init');");
-  
-When we add the juggernaut callback it must be a string because Juggernaut is defined in one of the assets that hasn't been loaded yet.
+These callbacks are executed in the global scope.  This method of adding callbacks is not recommended for two reasons:
 
-<tt>window.ajax.prependOnLoad</tt> adds the callback to the front of the queue.  Callbacks can also be functions, for example:
+1. Safari has trouble with some String callbacks.
+2. If Ajax is disabled, these callbacks will not be executed, because the <tt>Ajax-Info</tt> header will not be set.
 
-  window.ajax.onLoad(function() {
-    alert('All your asset are ours!');
-  });
-  
+   However, callbacks added directly to the <tt>window.ajax</tt> instance will still be executed, and they will execute immediately, so your code continues to work as expected.
+
+== JavaScript Gotchas
+
+Most of the problems you will likely encounter from a change to Ajax will be JavaScript related.  These problems become more noticeable for the following reasons:
+
+1. JavaScript that has been loaded, remains loaded for a very long time.  This can lead to:
+   1. Memory leaks
+   2. Callbacks executing ad infinitum, likely on content that has since been replaced.
+2. Inconsistent browser handling of JavaScript returned via AJAX:
+   1. JavaScript in AJAX response is executed in local scope
+   1. Safari {scoping issues}[http://forum.jquery.com/topic/dealing-with-globaleval-and-safari-suggestion-for-a-better-approach]
+   3. {Inconsistent support for <tt>script.onload</tt>}[http://unixpapa.com/js/dyna.html]
+3. Badly written JavaScript libraries
+
+To ease some of the pain, observe some of the following advice:
+
+1. Never use {<tt>document.write</tt>}[http://javascript.crockford.com/script.html]
+2. Use <tt>window</tt> to avoid scoping issues.
+3. Modify your third-party JavaScript libraries to also assign classes etc to <tt>window</tt>.
+4. Use jQuery {live events}[http://api.jquery.com/live/]
+5. Dynamically turn off repeating callbacks e.g.
+
+    function my_repetitive_callback() {
+      if ($(selector).size() == 0) {
+        // Turn off the interval
+        if (object.interval_id !== undefined) {
+          clearInterval(object.interval_id);
+          object.interval_id = undefined;
+        }
+      } else {
+        $(selector).do().some().jquery().kung().foo();
+      }
+    }
+
+    // Start the interval.  Do this whenever a page is rendered
+    // that has content we want to work with.  This will start
+    // the interval running.  When we change the page, the
+    // content will disappear and the interval will turn itself off.
+    object.interval_id = setInterval(my_repetitive_callback, 5000);
+
+== Testing
+
+* We use RSpec
+* See <tt>Ajax::Spec::Helpers</tt> and <tt>Ajax::Spec::Extension</tt> {in the rdocs}[http://rdoc.info/projects/kjvarga/ajax]
+* Copy <tt>ajax/spec/integration/ajax_spec.rb</tt> into your project to ensure that the Ajax integration always works.
+
 == Contributions
 
 Contributions are welcome.  Please fork the project and send me a pull request with your changes and Spec tests.
 
 == Useful Resources
 
-* AjaxPatters[http://ajaxpatterns.org/Unique_URLs] useful discussion of techniques for maintaining state using JavaScript to poll for changes to <tt>window.location.hash</tt>.
-* link jQuery Address[http://www.asual.com/jquery/address/] JavaScript library for managing the URL.
-* SWFAddress[http://www.asual.com/swfaddress/] deep linking solution for Flash.
+* {AJAX site crawling specification}[http://code.google.com/web/ajaxcrawling/docs/getting-started.html].
+* AjaxPatters[http://ajaxpatterns.org/] useful discussion of AJAX-related problems and their solutions.
+* {jQuery Address}[http://www.asual.com/jquery/address/] JavaScript library for managing the URL and deep-linking.
 
 Copyright (c) 2010 Karl Varga, released under the MIT license
