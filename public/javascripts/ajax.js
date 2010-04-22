@@ -576,7 +576,7 @@ var Ajax = function(options) {
    * @see onLoad
    */
   self.prependOnLoad = function(callback) {
-    if (self.enabled && !self.loaded) {
+    if (self.enabled && (self.lazy_load_assets && !self.loaded)) {
       self.callbacks.unshift(callback);
       console.log('[ajax] prepending callback', self.teaser(callback));
     } else {
