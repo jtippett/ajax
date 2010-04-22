@@ -1,3 +1,5 @@
+require 'json'
+
 module Ajax
   module Helpers
     module RequestHelper
@@ -15,33 +17,45 @@ module Ajax
       # Hash and/or Array values are merged so you can set multiple values
       def set_header(object, key, value)
         headers = object.is_a?(::ActionController::Response) ? object.headers : object
-        unless headers["Ajax-Info"].is_a?(Hash)
-          headers["Ajax-Info"] = {}
+        
+        info = case headers["Ajax-Info"]
+        when String
+          JSON.parse(headers["Ajax-Info"])
+        when Hash
+          headers["Ajax-Info"]
+        else
+          {}
         end
 
         # Deep merge hashes
-        if headers["Ajax-Info"].has_key?(key.to_s) &&
+        if info.has_key?(key.to_s) &&
             value.is_a?(Hash) &&
-            headers["Ajax-Info"][key.to_s].is_a?(Hash)
-          value = headers["Ajax-Info"][key.to_s].merge(value, &DEEP_MERGE)
+            info[key.to_s].is_a?(Hash)
+          value = info[key.to_s].merge(value, &DEEP_MERGE)
         end
 
         # Concat arrays
-        if headers["Ajax-Info"].has_key?(key.to_s) &&
+        if info.has_key?(key.to_s) &&
             value.is_a?(Array) &&
-            headers["Ajax-Info"][key.to_s].is_a?(Array)
-          value = headers["Ajax-Info"][key.to_s].concat(value)
+            info[key.to_s].is_a?(Array)
+          value = info[key.to_s].concat(value)
         end
       
-        headers["Ajax-Info"][key.to_s] = value
+        info[key.to_s] = value
+        headers["Ajax-Info"] = info.to_json
       end
 
       def get_header(object, key)
         headers = object.is_a?(::ActionController::Request) ? object.headers : object
-        unless headers["Ajax-Info"].is_a?(Hash)
-          headers["Ajax-Info"] = {}
+        info = case headers["Ajax-Info"]
+        when String
+          JSON.parse(headers["Ajax-Info"])
+        when Hash
+          headers["Ajax-Info"]
+        else
+          {}
         end
-        headers['Ajax-Info'][key.to_s]
+        info[key.to_s]
       end
 
       # Set one or more paths that can be accessed directly without the AJAX framework.
