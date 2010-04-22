@@ -1,3 +1,64 @@
+/**  
+*  Script lazy loader 0.5
+*  Copyright (c) 2008 Bob Matsuoka
+*
+*  This program is free software; you can redistribute it and/or 
+*  modify it under the terms of the GNU General Public License
+*  as published by the Free Software Foundation; either version 2
+*  of the License, or (at your option) any later version.
+*/
+ 
+var LazyLoader = {}; //namespace
+LazyLoader.timer = {};  // contains timers for scripts
+LazyLoader.scripts = [];  // contains called script references
+LazyLoader.load = function(url, callback) {
+  // handle object or path
+  var classname = null;
+  var properties = null;
+  try {
+    // make sure we only load once
+    if (LazyLoader.scripts.indexOf(url) == -1) {
+      // note that we loaded already
+      LazyLoader.scripts.push(url);
+      var script = document.createElement("script");
+      script.src = url;
+      script.type = "text/javascript";
+      $(script).appendTo("head");  // add script tag to head element
+      
+      // was a callback requested
+      if (callback) {    
+        // test for onreadystatechange to trigger callback
+        script.onreadystatechange = function () {         
+          if (script.readyState == 'loaded' || script.readyState == 'complete') {
+            callback();
+          }
+        };
+                                    
+        // test for onload to trigger callback
+        script.onload = function () {  
+          callback();
+          return;
+        };
+        
+        // safari doesn't support either onload or readystate, create a timer
+        // only way to do this in safari
+        if (($.browser.webkit && !navigator.userAgent.match(/Version\/3/)) || $.browser.opera) { // sniff
+          LazyLoader.timer[url] = setInterval(function() {
+            if (/loaded|complete/.test(document.readyState)) {
+              clearInterval(LazyLoader.timer[url]);
+              callback(); // call the callback handler
+            }
+          }, 10);
+        }
+      }
+    } else {
+      if (callback) { callback(); }
+    }
+  } catch (e) {
+    alert(e);
+  }
+}
+
 /**
  * AjaxAssets
  *
@@ -28,22 +89,28 @@ var AjaxAssets = function(array, type) {
     addAsset: function(path) {
       this.push(this.sanitizePath(path));
     },
-    
+
     /**
      * Load and add an asset.  The asset is loaded using the
      * unsanitized path should you need to put something in the
      * query string.
      */
-    loadAsset: function(path) {
+    loadAsset: function(path, callback) {
       console.log('[ajax] loading', type, path);
       this.push(this.sanitizePath(path));
-      this.appendScriptTag(path);
+      if (type == 'css') {
+        this.appendScriptTag(path, callback);
+      } else if ($.browser.msie || $.browser.mozilla) {
+        this.appendScriptTag(path, callback);
+      } else {
+        LazyLoader.load(path, callback);
+      }
     },
 
     /**
      * Return a boolean indicating whether an asset has
      * already been loaded.
-     */    
+     */
     loadedAsset: function(path) {
       path = this.sanitizePath(path);
       for (var i=0; i < this.length; i++) {
@@ -51,47 +118,45 @@ var AjaxAssets = function(array, type) {
           return true;
         }
       }
-      return false;      
+      return false;
     },
 
     /**
      * Remove query strings and otherwise cleanup paths
      * before adding them.
-     */    
+     */
     sanitizePath: function(path) {
       return path.replace(/\?.*/, '');
     },
-    
+
     /**
      * Supports debugging and references the script files as external resources
      * rather than inline.
      *
      * @see http://stackoverflow.com/questions/690781/debugging-scripts-added-via-jquery-getscript-function
-     */  
+     */
     appendScriptTag: function(url, callback) {
       if (type == 'js') {
         var head = document.getElementsByTagName("head")[0];
         var script = document.createElement("script");
         script.src = url;
         script.type = 'text/javascript'
-      
-        { // Handle Script loading
+        head.appendChild(script);
+        // Handle Script loading
+        if (callback) {
            var done = false;
-
-           // Attach handlers for all browsers
            script.onload = script.onreadystatechange = function(){
               if ( !done && (!this.readyState ||
                     this.readyState == "loaded" || this.readyState == "complete") ) {
                  done = true;
                  if (callback)
                     callback();
-
+           
                  // Handle memory leak in IE
                  script.onload = script.onreadystatechange = null;
               }
            };
-        }
-        head.appendChild(script);
+        }       
       } else if (type == 'css') {
         if (url.match(/datauri/)) {
           $(DATA_URI_START + '<link type="text/css" rel="stylesheet" href="'+ url +'">' + DATA_URI_END).appendTo('head');
@@ -102,7 +167,7 @@ var AjaxAssets = function(array, type) {
         }
       }
       return undefined;
-    }  
+    }
   });
 };
 
@@ -114,20 +179,20 @@ var AjaxAssets = function(array, type) {
  *      This must be set if you are using Ajax callbacks in your code,
  *      and you want them to still fire if Ajax is not enabled.
  *
- *    <tt>default_container</tt>  string jQuery selector of the default 
+ *    <tt>default_container</tt>  string jQuery selector of the default
  *      container element to receive content.
  *
  * Callbacks:
  *
  * Callbacks can be specified using Ajax-Info{ callbacks: 'javascript to eval' },
  * or by adding callbacks directly to the Ajax instance:
- * 
+ *
  *    window.ajax.onLoad(function() { doSomething(args); });
  *
  * Order of execution:
  *
  *
- */ 
+ */
 var Ajax = function(options) {
   var self = this;
 
@@ -145,22 +210,22 @@ var Ajax = function(options) {
   self.last_click_coords = undefined;
 
   // Parse options
-  self.options = options;  
+  self.options = options;
   self.default_container = options.default_container;
   if (options.enabled !== undefined) {
     self.enabled = options.enabled;
   }
-
+  
   // Initialize on DOM ready
   $(function() { self.init() });
-        
+
   /**
    * Initializations run on DOM ready.
    *
    * Bind event handlers and setup jQuery Address.
    */
   self.init = function() {
-    
+
     // Configure jQuery Address
     $.address.history(true);
     $.address.change = self.addressChanged;
@@ -168,21 +233,21 @@ var Ajax = function(options) {
     // Insert loading image
     var image = '<img src="/images/loading-icon-small.gif" id="loading-icon-small" alt="Loading..." />'
     $(image).hide().appendTo($('body'));
-    
+
     // Bind a live event to all ajax-enabled links
     $('a[data-deep-link]').live('click', self.linkClicked);
-    
+
     // Initialize the list of javascript assets
     if (self.javascripts === undefined) {
       self.javascripts = new AjaxAssets([], 'js');
-      
+
       $(document).find('script[type=text/javascript][src!=]').each(function() {
         var script = $(this);
         var src = script.attr('src');
-        
+
         // Local scripts only
         if (src.match(/^\//)) {
-          
+
           // Parse parameters passed to the script via the query string.
           // TODO: Untested.  It's difficult for us to use this with Jammit.
           if (src.match(/\Wajax.js\?.+/)) {
@@ -190,7 +255,7 @@ var Ajax = function(options) {
             jQuery.each(params, function(idx, param) {
               param = param.split('=');
               if (param.length == 1) { return true; }
-              
+
               switch(param[0]) {
                 case 'enabled':
                   self.enabled = param[1] == 'false' ? false : true;
@@ -203,33 +268,33 @@ var Ajax = function(options) {
               }
             });
           }
-          
+
           self.javascripts.addAsset(script.attr('src'));
         }
       });
     }
     self.initialized = true;
-    
+
     // Run onInit() callbacks
   };
-  
+
   /**
    * jQuery Address callback triggered when the address changes.
    */
   self.addressChanged = function() {
     if (document.location.pathname != '/') { return false; }
-
-    if (typeof(self.loaded_by_framework) == 'undefined' || self.loaded_by_framework != true) { 
+    if (window.ajax.disable_address_intercept == true) {return false;}
+    if (typeof(self.loaded_by_framework) == 'undefined' || self.loaded_by_framework != true) {
       self.loaded_by_framework = true;
-      return false; 
-    }    
-    
-    self.loadPage({ 
+      return false;
+    }
+
+    self.loadPage({
       url: $.address.value().replace(/\/\//, '/')
     });
     return true;
   };
-  
+
   /**
    * loadPage
    *
@@ -246,7 +311,7 @@ var Ajax = function(options) {
    *  Cookies in the response are automatically set on the document.cookie.
    */
   self.loadPage = function(options) {
-    if (!self.enabled) { 
+    if (!self.enabled) {
       document.location = options.url;
       return true;
     }
@@ -343,33 +408,22 @@ var Ajax = function(options) {
       console.log('Using page title '+data.title);
       $.address.title(data.title);
     }
-    
+
     if (data.tab !== undefined) {
       console.log('Activating tab '+data.tab);
       $(data.tab).trigger('activate');
     }
-    
+
     /**
-     * Load assets
+     * Load stylesheets
     */
-    if (data.assets !== undefined && data.assets.stylesheets !== undefined) {
+    if (data.assets && data.assets.stylesheets !== undefined) {
       jQuery.each(jQuery.makeArray(data.assets.stylesheets), function(idx, url) {
         if (self.stylesheets.loadedAsset(url)) {
           console.log('[ajax] skipping css', url);
           return true;
         } else {
           self.stylesheets.loadAsset(url);
-        }
-      });
-    }
-    
-    if (data.assets !== undefined && data.assets.javascripts !== undefined) {
-      jQuery.each(jQuery.makeArray(data.assets.javascripts), function(idx, url) {
-        if (self.javascripts.loadedAsset(url)) {
-          console.log('[ajax] skipping js', url);
-          return true;
-        } else {
-          self.javascripts.loadAsset(url);
         }
       });
     }
@@ -381,23 +435,39 @@ var Ajax = function(options) {
     console.log('Set data ',data);
     container.data('ajax-info', data)
     container.html(responseText);
-    
+
     /**
-     * Execute callbacks
+     * Include callbacks from Ajax-Info
     */
-    if (data.callbacks !== undefined) {
-      jQuery.each(jQuery.makeArray(data.callbacks), function(idx, callback) {
-        self.executeCallback(callback);
-      });
+    if (data.callbacks) {
+      data.callbacks = jQuery.makeArray(data.callbacks);
+      self.callbacks.concat(data.callbacks);
     }
+
+    /**
+     * Load javascipts
+    */    
+    if (data.assets && data.assets.javascripts !== undefined) {
+      var count = data.assets.javascripts.length;
+      var callback;
+      
+      jQuery.each(jQuery.makeArray(data.assets.javascripts), function(idx, url) {
+        if (self.javascripts.loadedAsset(url)) {
+          console.log('[ajax] skipping js', url);
+          return true;
+        }
+        
+        // Execute callbacks once the last asset has loaded
+        callback = (idx == count - 1) ? undefined : self.executeCallbacks;
+        self.javascripts.loadAsset(url, callback);
+      });
+    } else {
+      // Execute callbacks immediately
+      self.executeCallbacks();
+    }
+
+    $(document).trigger('ajax.onload');
     
-    if (self.callbacks.length > 0) {
-      jQuery.each(self.callbacks, function(idx, callback) {
-        self.executeCallback(callback);
-      });
-      self.callbacks = [];
-    }
-            
     /**
      * Set cookies
     */
@@ -432,28 +502,33 @@ var Ajax = function(options) {
    */
   self.showLoadingImage = function() {
     var icon = $('#loading-icon-small');
-    
+
     // Follow the mouse pointer
     $(document).bind('mousemove', self.updateImagePosition);
-    
+
     // Display at last click coords initially
     if (self.last_click_coords !== undefined) {
       self.updateImagePosition(self.last_click_coords);
-      
+
     // Center it
     } else {
+      var marginTop  = parseInt(icon.css('marginTop'), 10);
+      var marginLeft = parseInt(icon.css('marginLeft'), 10);
+      marginTop      = isNaN(marginTop)  ? 0 : marginTop;
+      marginLeft     = isNaN(marginLeft) ? 0 : marginLeft;
+      
       icon.css({
-  			position:	  'absolute',
-  			left:		    '50%', 
-  			top:		    '50%', 
-  			zIndex:		  '99',
-				marginTop:	parseInt(icon.css('marginTop'), 10) + jQuery(window).scrollTop(), 
-				marginLeft:	parseInt(icon.css('marginLeft'), 10) + jQuery(window).scrollLeft()
-  		});
-  	}
-    icon.show();    
+        position:   'absolute',
+        left:       '50%',
+        top:        '50%',
+        zIndex:     '99',
+        marginTop:  marginTop  + jQuery(window).scrollTop(),
+        marginLeft: marginLeft + jQuery(window).scrollLeft()
+      });
+    }
+    icon.show();
   };
-  
+
   /**
    * Update the position of the loading icon.
    */
@@ -466,7 +541,7 @@ var Ajax = function(options) {
     });
   };
 
-  
+
   /**
    * onLoad
    *
@@ -480,7 +555,7 @@ var Ajax = function(options) {
   self.onLoad = function(callback) {
     if (self.enabled && !self.loaded) {
       self.callbacks.push(callback);
-      console.log('[ajax] appending callback', callback);
+      console.log('[ajax] appending callback', self.teaser(callback));
     } else {
       self.executeCallback(callback, true);
     }
@@ -496,12 +571,25 @@ var Ajax = function(options) {
   self.prependOnLoad = function(callback) {
     if (self.enabled && !self.loaded) {
       self.callbacks.unshift(callback);
-      console.log('[ajax] prepending callback', callback);
+      console.log('[ajax] prepending callback', self.teaser(callback));
     } else {
       self.executeCallback(callback, true);
     }
   };
-  
+
+  /**
+   * Execute callbacks
+  */
+  self.executeCallbacks = function() {
+    var callbacks = jQuery.makeArray(self.callbacks);
+    if (callbacks.length > 0) {
+      jQuery.each(callbacks, function(idx, callback) {
+        self.executeCallback(callback);
+      });
+      self.callbacks = [];
+    }
+  };
+
   /**
    * Execute a callback given as a string or function reference.
    *
@@ -513,8 +601,8 @@ var Ajax = function(options) {
       $(function() {
         self.executeCallback(callback);
       })
-    } else { 
-      console.log('[ajax] executing callback', callback);   
+    } else {
+      console.log('[ajax] executing callback', self.teaser(callback));
       try {
         if (jQuery.isFunction(callback)) {
           callback();
@@ -524,6 +612,10 @@ var Ajax = function(options) {
       } catch(e) {
         console.log('[ajax] callback failed with exception', e);
       }
-    }      
-  };  
+    }
+  };
+
+  self.teaser = function(callback) {
+    return new String(callback).slice(0,50);
+  };
 };
