@@ -16,6 +16,10 @@ context 'Ajax::UrlHelpers' do
       Ajax.hashed_url_from_traditional('/Beyonce').should == '/#/Beyonce'
     end
 
+    it "should handle special characters" do
+      Ajax.hashed_url_from_traditional('/beyoncé').should == '/#/beyonc%C3%A9'
+    end
+    
     DOMAINS.each do |domain|
       it "should work for domain #{domain}" do
         Ajax.hashed_url_from_traditional("http://#{domain}/playlists").should == "http://#{domain}/#/playlists"
@@ -27,6 +31,10 @@ context 'Ajax::UrlHelpers' do
     it "should strip double slashes" do
       Ajax.hashed_url_from_fragment('/Beyonce#/Akon').should == '/#/Akon'
       Ajax.hashed_url_from_fragment('/Beyonce#Akon').should == '/#/Akon'
+    end
+    
+    it "should handle special characters" do
+      Ajax.hashed_url_from_fragment('/#/beyoncé').should == '/#/beyonc%C3%A9'
     end
 
     it "should handle no fragment" do
@@ -46,6 +54,7 @@ context 'Ajax::UrlHelpers' do
     it "should detect root urls" do
       Ajax.url_is_root?('/#/Beyonce?query2').should be(true)
       Ajax.url_is_root?('/').should be(true)
+      Ajax.url_is_root?('/#/beyoncé'). should be(true)
     end
 
     it "should detect non-root urls" do
@@ -54,6 +63,10 @@ context 'Ajax::UrlHelpers' do
 
     it "should support full URLs" do
       Ajax.is_hashed_url?('http://musicsocial.com.local/#/playlists').should be(true)
+    end
+    
+    it "should support special characters" do
+      Ajax.is_hashed_url?('http://musicsocial.com.local/#/beyoncé').should be(true)
     end
   end
 
@@ -88,7 +101,11 @@ context 'Ajax::UrlHelpers' do
     end
 
     it "should handle no fragment" do
-      Ajax.traditional_url_from_fragment('/Beyonce').should == '/'
+      Ajax.traditional_url_from_fragment('/Beyonce#/beyoncé').should == '/beyonc%C3%A9'
+    end
+    
+    it "should handle special characters" do
+      Ajax.traditional_url_from_fragment('/Beyonce#/Akon').should == '/Akon'
     end
 
     DOMAINS.each do |domain|
