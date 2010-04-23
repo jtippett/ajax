@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{ajax}
-  s.version = "0.1.3"
+  s.version = "0.1.4"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Karl Varga"]
-  s.date = %q{2010-04-21}
+  s.date = %q{2010-04-22}
   s.description = %q{Augment a traditional Rails application with a completely AJAX frontend, while transparently handling issues important to both the enterprise and end users, such as testing, SEO and browser history.}
   s.email = %q{kjvarga@gmail.com}
   s.extra_rdoc_files = [
@@ -38,8 +38,7 @@ Gem::Specification.new do |s|
      "lib/rack-ajax.rb",
      "lib/rack-ajax/decision_tree.rb",
      "lib/rack-ajax/parser.rb",
-     "public/images/loading-icon-large.gif",
-     "public/images/loading-icon-small.gif",
+     "public/images/ajax-loading.gif",
      "public/javascripts/ajax.js",
      "public/javascripts/jquery.address-1.1.js",
      "public/javascripts/jquery.address-1.1.min.js",
