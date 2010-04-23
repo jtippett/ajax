@@ -53,7 +53,7 @@ Ajax is being used live in production on altnet.com[http://altnet.com], if you w
   created: public/javascripts/jquery.address-1.2rc.js
   created: public/javascripts/jquery.address-1.2rc.min.js
   created: public/javascripts/jquery.json-2.2.min.js
-  created: public/images/loading-icon-small.gif
+  created: public/images/ajax-loading.gif
 
   $ rake ajax:install
   skipped: app/controllers/ajax_controller.rb exists!
