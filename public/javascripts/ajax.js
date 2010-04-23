@@ -187,6 +187,20 @@ var AjaxAssets = function(array, type) {
  *      lazy loading assets.  If this is disabled, callbacks will be
  *      executed immediately.
  *
+ *    <tt>show_loading_image</tt> (default true) boolean indicating whether
+ *      to show the loading image.
+ *
+ *    <tt>loading_image</tt>  (optional) string jQuery selector of an
+ *      existing image to show while pages are loading.  If not set the default
+ *      selector is: img#ajax-loading
+ *
+ *    <tt>loading_image_path</tt> (optional) string full path to the loading
+ *      image.  Used to append an image tag to the body element
+ *      if an existing image is not found.  Default: /images/ajax-loading.gif
+ *
+ *      To customize image handling, override the <tt>showLoadingImage</tt> and
+ *      <tt>hideLoadingImage</tt> methods.
+ *
  * Callbacks:
  *
  * Callbacks can be specified using Ajax-Info{ callbacks: 'javascript to eval.' },
@@ -209,31 +223,30 @@ var AjaxAssets = function(array, type) {
  */
 var Ajax = function(options) {
   var self = this;
-
-  self.enabled = true;
-  self.default_container = undefined;
-  self.loaded_by_framework = false;
-  self.loading_icon = $('#loading-icon-small');
-  self.javascripts = undefined;
-  self.stylesheets = new AjaxAssets([], 'css');
-  self.callbacks = [];
-  self.loaded = false;
-  self.lazy_load_assets = false;
   
-  // For initial position of the loading icon.  Often the mouse does not
-  // move so position it by the link that was clicked.
-  self.last_click_coords = undefined;
+  /**
+   * Options
+   */
+  self.options = {
+    enabled: true,
+    default_container: undefined,
+    loaded_by_framework: false,
+    show_loading_image: true,
+    loading_image: 'img#ajax-loading',
+    loading_image_path: '/images/ajax-loading.gif',
+    javascripts: undefined,
+    stylesheets: new AjaxAssets([], 'css'),
+    callbacks: [],
+    loaded: false,
+    lazy_load_assets: false,
 
-  // Parse options
-  self.options = options;
-  self.default_container = options.default_container;
-  if (options.enabled !== undefined) {
-    self.enabled = options.enabled;
-  }
-  if (options.lazy_load_assets !== undefined) {
-    self.lazy_load_assets = options.lazy_load_assets;
-  }
-  
+    // For initial position of the loading icon.  Often the mouse does not
+    // move so position it by the link that was clicked.
+    last_click_coords: undefined
+  };
+  jQuery.extend(self.options, options);
+  jQuery.extend(self, self.options);
+
   // Initialize on DOM ready
   $(function() { self.init() });
 
@@ -247,10 +260,6 @@ var Ajax = function(options) {
     // Configure jQuery Address
     $.address.history(true);
     $.address.change = self.addressChanged;
-
-    // Insert loading image
-    var image = '<img src="/images/loading-icon-small.gif" id="loading-icon-small" alt="Loading..." />'
-    $(image).hide().appendTo($('body'));
 
     // Bind a live event to all ajax-enabled links
     $('a[data-deep-link]').live('click', self.linkClicked);
@@ -342,9 +351,9 @@ var Ajax = function(options) {
       beforeSend: self.setRequestHeaders,
       success: self.responseHandler,
       complete: function(XMLHttpRequest, responseText) {
-        // Stop watching the mouse position and scroll to the top of the page.
-        $(document).unbind('mousemove', self.updateImagePosition).scrollTop(0);
-        $('#loading-icon-small').hide();
+        // Scroll to the top of the page.
+        $(document).scrollTop(0);
+        self.hideLoadingImage();
         self.loaded = true;
       },
       error: function(XMLHttpRequest, textStatus, errorThrown) {
@@ -519,10 +528,29 @@ var Ajax = function(options) {
   };
 
   /**
+   * Hide the loading image.
+   *
+   * Stop watching the mouse position.
+   */
+  self.hideLoadingImage = function() {
+    if (!self.show_loading_image) { return; }
+    $(document).unbind('mousemove', self.updateImagePosition);
+    $(self.loading_image).hide();
+  };
+
+  /**
    * Show the loading image.
    */
   self.showLoadingImage = function() {
-    var icon = $('#loading-icon-small');
+    if (!self.show_loading_image) { return; }
+
+    var icon = $(self.loading_image);
+
+    // Create the image if it doesn't exist
+    if (icon.size() == 0)  {
+      $('<img src="'+ self.loading_image_path +'" id="ajax-loading" alt="Loading..." />').hide().appendTo($('body'));
+      icon = $(self.loading_image);
+    }
 
     // Follow the mouse pointer
     $(document).bind('mousemove', self.updateImagePosition);
@@ -554,14 +582,13 @@ var Ajax = function(options) {
    * Update the position of the loading icon.
    */
   self.updateImagePosition = function(e) {
-    $('#loading-icon-small').css({
+    $(self.loading_image).css({
       zIndex:   99,
       position: 'absolute',
       top:      e.pageY + 14,
       left:     e.pageX + 14
     });
   };
-
 
   /**
    * onLoad
@@ -639,4 +666,26 @@ var Ajax = function(options) {
   self.teaser = function(callback) {
     return new String(callback).slice(0,50);
   };
+
+  /**
+   * Escape all special jQuery CSS selector characters in *selector*.
+   * Useful when you have a class or id which contains special characters
+   * which you need to include in a selector.
+   */
+  self.escapeSelector = (function() {
+    var specials = [
+      '#', '&', '~', '=', '>',
+      "'", ':', '"', '!', ';', ','
+    ];
+    var regexSpecials = [
+      '.', '*', '+', '|', '[', ']', '(', ')', '/', '^', '$'
+    ];
+    var sRE = new RegExp(
+      '(' + specials.join('|') + '|\\' + regexSpecials.join('|\\') + ')', 'g'
+    );
+
+    return function(selector) {
+      return selector.replace(sRE, '\\$1');
+    }
+  })();
 };
