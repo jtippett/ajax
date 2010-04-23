@@ -18,6 +18,7 @@ context 'Ajax::UrlHelpers' do
 
     it "should handle special characters" do
       Ajax.hashed_url_from_traditional('/beyoncé').should == '/#/beyonc%C3%A9'
+      Ajax.hashed_url_from_traditional('/red hot').should == '/#/red%20hot'
     end
     
     DOMAINS.each do |domain|
@@ -35,6 +36,7 @@ context 'Ajax::UrlHelpers' do
     
     it "should handle special characters" do
       Ajax.hashed_url_from_fragment('/#/beyoncé').should == '/#/beyonc%C3%A9'
+      Ajax.hashed_url_from_fragment('/#/red hot').should == '/#/red%20hot'
     end
 
     it "should handle no fragment" do
@@ -102,6 +104,7 @@ context 'Ajax::UrlHelpers' do
 
     it "should handle no fragment" do
       Ajax.traditional_url_from_fragment('/Beyonce#/beyoncé').should == '/beyonc%C3%A9'
+      Ajax.traditional_url_from_fragment('/#/red hot').should == '/red%20hot'
     end
     
     it "should handle special characters" do
