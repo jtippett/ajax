@@ -7,6 +7,7 @@ module Ajax
         {:name => 'Gigabot', :user_agent_regex => /\bGigabot\b/i, :sample_agent_string => 'Gigabot'},
         {:name => 'libwww-perl', :user_agent_regex => /\blibwww-perl\b/i, :sample_agent_string => 'libwww-perl'},
         {:name => 'lwp-trivial', :user_agent_regex => /\blwp-trivial\b/i, :sample_agent_string => 'lwp-trivial'},
+        {:name => 'Lynx', :user_agent_regex => /\bLynx\b/i, :sample_agent_string => 'Lynx'},
         {:name => 'MSNBot', :user_agent_regex => /\bmsnbot\b/i, :sample_agent_string => 'msnbot'},
         {:name => 'SiteUptime', :user_agent_regex => /\bSiteUptime\b/i, :sample_agent_string => 'SiteUptime'},
         {:name => 'Slurp', :user_agent_regex => /\bSlurp\b/i, :sample_agent_string => 'Slurp'},
